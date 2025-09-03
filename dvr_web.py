@@ -9,7 +9,7 @@ import requests
 from flask import Flask, render_template, request, jsonify
 
 # === CONFIG ===
-HDHR_IP = "192.168.1.246"
+HDHR_IP = "192.168.1.---"
 SAVE_DIR = r"F:\TV_Recordings"
 FFMPEG_PATH = r"C:\FFMPEG\ffmpeg-2025-08-25-git-1b62f9d3ae-essentials_build\bin\ffmpeg.exe"
 SCHEDULE_FILE = os.path.join(SAVE_DIR, "scheduled_jobs.json")
@@ -172,3 +172,4 @@ def cancel():
 
 if __name__=="__main__":
     app.run(host="0.0.0.0", port=5000)
+
