@@ -10,7 +10,7 @@ import json
 import requests
 
 # === CONFIG ===
-HDHR_IP = "192.168.1.---"
+HDHR_IP = "192.168.1.126"
 SAVE_DIR = r"F:\TV_Recordings"
 FFMPEG_PATH = r"C:\FFMPEG\ffmpeg-2025-08-25-git-1b62f9d3ae-essentials_build\bin\ffmpeg.exe"
 SCHEDULE_FILE = os.path.join(SAVE_DIR, "scheduled_jobs.json")

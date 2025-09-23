@@ -1,64 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HDHomeRun DVR</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#222" />
+    <link rel="manifest" href="/static/manifest.json" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <title>TV Home Media Automation</title>
 </head>
 <body>
-<div class="container my-4">
-    <h1 class="mb-4">HDHomeRun DVR</h1>
+    <div id="app" class="centered-app">
+        <h1>TV Home Media Automation</h1>
+        <!-- PWA/NLP Controls -->
+        <form id="nlpForm">
+            <input type="text" id="commandInput" placeholder="Type or speak a command..." autocomplete="off" required />
+            <button type="submit">Send</button>
+            <button type="button" id="micBtn" title="Speak"><span role="img" aria-label="mic">🎤</span></button>
+        </form>
+        <button id="wolBtn">Wake PC</button>
+        <div id="result"></div>
 
-    <!-- Record Now Form -->
-    <form id="recordForm" class="row g-3">
-        <div class="col-md-4">
-            <label for="channel" class="form-label">Channel</label>
-            <select id="channel" name="channel" class="form-select">
-                {% for ch in channels %}
+       
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+            </select>
+        </div>
+
+<form id="classicDvrForm" style="display: flex; flex-direction: column; max-width: 400px; margin: 2rem auto; gap: 0.5rem;">
+    <div>
+        <label for="channel" class="form-label">Channel</label><br>
+        <select id="channel" name="channel" class="form-select">
+            <option value="">Select Channel</option>
+            {% for ch in channels %}
                 <option value="{{ ch }}">{{ ch }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <label for="duration" class="form-label">Duration (min)</label>
-            <input type="number" class="form-control" id="duration" name="duration" value="30">
-        </div>
-
-        <div class="col-md-2">
-            <label for="format" class="form-label">Format</label>
-            <select id="format" name="format" class="form-select">
-                <option value="mp4" selected>MP4</option>
-                <option value="ts">TS</option>
-            </select>
-        </div>
-
-        <div class="col-md-2">
-            <label for="crf" class="form-label">CRF</label>
-            <input type="number" class="form-control" id="crf" name="crf" value="23">
-        </div>
-
-        <div class="col-md-2">
-            <label for="preset" class="form-label">Preset</label>
-            <select id="preset" name="preset" class="form-select">
-                <option value="ultrafast">ultrafast</option>
-                <option value="superfast">superfast</option>
-                <option value="veryfast">veryfast</option>
-                <option value="faster">faster</option>
-                <option value="fast" selected>fast</option>
-                <option value="medium">medium</option>
-                <option value="slow">slow</option>
-                <option value="slower">slower</option>
-                <option value="veryslow">veryslow</option>
-            </select>
-        </div>
-
-        <div class="col-md-12 mt-2">
-            <button type="button" class="btn btn-primary me-2" onclick="startRecording()">Record Now</button>
-            <button type="button" class="btn btn-danger" onclick="stopRecording()">Stop Recording</button>
-        </div>
-    </form>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="duration" class="form-label">Duration (min)</label><br>
+        <input type="number" class="form-control" id="duration" name="duration" value="30">
+    </div>
+    <div>
+        <label for="format" class="form-label">Format</label><br>
+        <select id="format" name="format" class="form-select">
+            <option value="mp4" selected>MP4</option>
+            <option value="ts">TS</option>
+        </select>
+    </div>
+    <div>
+        <label for="crf" class="form-label">CRF</label><br>
+        <input type="number" class="form-control" id="crf" name="crf" value="23">
+    </div>
+    <div>
+        <label for="preset" class="form-label">Preset</label><br>
+        <select id="preset" name="preset" class="form-select">
+            <option value="ultrafast">ultrafast</option>
+            <option value="superfast">superfast</option>
+            <option value="veryfast">veryfast</option>
+            <option value="faster">faster</option>
+            <option value="fast" selected>fast</option>
+            <option value="medium">medium</option>
+            <option value="slow">slow</option>
+            <option value="slower">slower</option>
+            <option value="veryslow">veryslow</option>
+        </select>
+    </div>
+    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+        <button type="button" class="btn btn-primary me-2" onclick="startRecording()">Record Now</button>
+        <button type="button" class="btn btn-danger" onclick="stopRecording()">Stop Recording</button>
+    </div>
+</form>
 
     <hr>
 
@@ -93,10 +105,134 @@
     <h4>Scheduled Recordings</h4>
     <ul id="scheduledList" class="list-group">
         {% for job in scheduled %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ job }}
-            <button class="btn btn-sm btn-outline-danger" onclick="cancelScheduled('{{ loop.index0 }}')">Cancel</button>
-        </li>
+            {% if job.type == 'recurring_series' %}
+                <!-- Recurring Series Recording -->
+                <li class="list-group-item border-success">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-success">
+                                🔄 {{ job.title }} 
+                                {% if job.is_time_based %}
+                                <span class="badge bg-primary ms-2">Ongoing Recording</span>
+                                {% else %}
+                                <span class="badge bg-success ms-2">{{ job.episodes|length }} episodes</span>
+                                {% endif %}
+                            </div>
+                            <div class="text-muted small mb-1">
+                                {% if job.is_time_based %}
+                                Time-Based Series • {{ job.recurrence.description }} • Records automatically every week
+                                {% else %}
+                                Recurring Series • {{ job.recurrence.description }}
+                                {% endif %}
+                            </div>
+                            <div class="text-muted small">
+                                {{ job.channel }} ({{ job.channel_number }}) • {{ job.duration }} minutes
+                            </div>
+                            
+                            <!-- Next episode info -->
+                            {% if job.next_episode %}
+                            <div class="text-info small mt-1">
+                                📅 Next: {{ job.next_episode.date }} at {{ job.next_episode.time }}
+                                {% if job.next_episode.episode_id %} • {{ job.next_episode.episode_id }}{% endif %}
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Collapsible episode list -->
+                            <div class="collapse mt-2" id="recurring-{{ loop.index0 }}">
+                                <div class="border-start border-3 border-success ps-3">
+                                    {% if job.is_time_based %}
+                                    <strong>Recording Schedule:</strong>
+                                    <div class="border-start border-2 border-light ps-2 mb-1 mt-1">
+                                        <div class="small text-primary">
+                                            <strong>⏰ {{ job.recurrence.description }}</strong> on {{ job.channel }} ({{ job.channel_number }})
+                                        </div>
+                                        <div class="text-secondary small">
+                                            This is an ongoing recording rule that will record every week at this time, regardless of what show is on.
+                                        </div>
+                                    </div>
+                                    <strong>Sample Episodes Found:</strong>
+                                    {% for episode in job.sample_episodes %}
+                                    <div class="border-start border-2 border-light ps-2 mb-1 mt-1">
+                                        <div class="small">
+                                            <strong>{{ episode.date }}</strong> at {{ episode.time }}
+                                            {% if episode.episode_id %} • {{ episode.episode_id }}{% endif %}
+                                            {% if episode.episode_title %} - {{ episode.episode_title }}{% endif %}
+                                        </div>
+                                        {% if episode.description %}
+                                        <div class="text-secondary small">
+                                            {{ episode.description[:100] }}{% if episode.description|length > 100 %}...{% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% else %}
+                                    <strong>All Episodes:</strong>
+                                    {% for episode in job.episodes %}
+                                    <div class="border-start border-2 border-light ps-2 mb-1 mt-1">
+                                        <div class="small">
+                                            <strong>{{ episode.date }}</strong> at {{ episode.time }}
+                                            {% if episode.episode_id %} • {{ episode.episode_id }}{% endif %}
+                                            {% if episode.episode_title %} - {{ episode.episode_title }}{% endif %}
+                                        </div>
+                                        {% if episode.description %}
+                                        <div class="text-secondary small">
+                                            {{ episode.description[:100] }}{% if episode.description|length > 100 %}...{% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Toggle button for episode list -->
+                            <button class="btn btn-sm btn-outline-success mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#recurring-{{ loop.index0 }}" aria-expanded="false">
+                                {% if job.is_time_based %}
+                                Show/Hide Recording Details
+                                {% else %}
+                                Show/Hide All Episodes
+                                {% endif %}
+                            </button>
+                        </div>
+                        <div class="ms-2 d-flex flex-column gap-1">
+                            <button class="btn btn-sm btn-outline-warning" onclick="cancelNextEpisode('{{ job.id }}')">Cancel Next</button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="cancelRecurringSeries('{{ job.id }}')">Cancel All</button>
+                        </div>
+                    </div>
+                </li>
+            {% else %}
+                <!-- Single Episode Recording -->
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">{{ job.title }}</div>
+                            {% if job.episode_id or job.episode_title %}
+                            <div class="text-primary">
+                                {% if job.episode_id %}{{ job.episode_id }}{% endif %}
+                                {% if job.episode_title %} - {{ job.episode_title }}{% endif %}
+                            </div>
+                            {% endif %}
+                            <div class="text-muted small">
+                                {{ job.channel }} • {{ job.date }} at {{ job.time }}
+                                {% if job.original_air_date and job.original_air_date != job.date %}
+                                <br>Originally aired: {{ job.original_air_date }}
+                                {% endif %}
+                            </div>
+                            {% if job.description %}
+                            <div class="text-secondary small mt-1" style="max-width: 400px;">
+                                {{ job.description[:150] }}{% if job.description|length > 150 %}...{% endif %}
+                            </div>
+                            {% endif %}
+                            {% if job.filename %}
+                            <div class="text-info small mt-1">
+                                📁 {{ job.filename }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger ms-2" onclick="cancelScheduled('{{ loop.index0 }}')">Cancel</button>
+                    </div>
+                </li>
+            {% endif %}
         {% endfor %}
     </ul>
 </div>
@@ -143,6 +279,33 @@ async function cancelScheduled(idx) {
     const result = await res.json();
     document.getElementById("progress").innerText = result.message;
     window.location.reload();
+}
+
+async function cancelRecurringSeries(ruleId) {
+    if (confirm('Cancel all upcoming recordings for this series?')) {
+        const res = await fetch('/cancel_recurring', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rule_id: ruleId})});
+        const result = await res.json();
+        document.getElementById("progress").innerText = result.message;
+        window.location.reload();
+    }
+}
+
+async function cancelNextEpisode(ruleId) {
+    if (confirm('Cancel only the next episode?')) {
+        const res = await fetch('/cancel_next_episode', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rule_id: ruleId})});
+        const result = await res.json();
+        document.getElementById("progress").innerText = result.message;
+        window.location.reload();
+    }
+}
+
+async function cancelSeries(seriesName) {
+    if (confirm(`Cancel all recordings for "${seriesName}"?`)) {
+        const res = await fetch('/cancel_series', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({series_name: seriesName})});
+        const result = await res.json();
+        document.getElementById("progress").innerText = result.message;
+        window.location.reload();
+    }
 }
 </script>
 </body>
