@@ -43,7 +43,7 @@ def wake_on_lan(mac_address, broadcast_ip='192.168.1.255', port=9):
         # Also try direct IP if we can determine it
         try:
             # Try to send to specific IP too (some networks need this)
-            pc_ip = "192.168.1.214"  # Your PC's IP
+            pc_ip = "YOUR_PC_IP_HERE"  # Replace with your PC's IP
             sock.sendto(magic_packet, (pc_ip, port))
         except:
             pass
@@ -70,7 +70,7 @@ def ping_host(host, timeout=1):
     except:
         return False
 
-def check_dvr_running(host="192.168.1.214", port=5000, timeout=2):
+def check_dvr_running(host="YOUR_PC_IP_HERE", port=5000, timeout=2):
     """Check if DVR web service is responding"""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -84,7 +84,7 @@ def check_dvr_running(host="192.168.1.214", port=5000, timeout=2):
 def wake_and_wait(mac_address, max_wait=120):
     """Wake PC and wait for it to fully boot with DVR running"""
     
-    pc_ip = "192.168.1.214"
+    pc_ip = "YOUR_PC_IP_HERE"  # Replace with your PC's actual IP
     
     print(f"🌅 Waking PC with MAC: {mac_address}")
     

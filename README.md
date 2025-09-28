@@ -75,6 +75,16 @@ python setup.py
 
 This will create a `config.json` file with your settings.
 
+### ⚠️ Important: Replace Placeholder Values
+
+LineDrive includes placeholder values that **must be customized** for your setup:
+
+- **API Keys**: Replace `your_prowlarr_api_key_here` with your actual Prowlarr API key
+- **IP Addresses**: Replace `YOUR_PC_IP_HERE` with your computer's actual IP address  
+- **Network Settings**: Update HDHomeRun IP and other network configurations
+
+Use the **Settings (⚙️) button** in the web interface or run the setup wizard to configure these values.
+
 ### Manual Configuration
 
 You can also manually edit the `config.json` file or use the built-in configuration menu:

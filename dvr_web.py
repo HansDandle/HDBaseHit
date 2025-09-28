@@ -3113,7 +3113,13 @@ def debug_nfl_matchup():
 def index():
     # scheduled_jobs now contains dictionaries with recording info
     scheduled = scheduled_jobs  # Pass the full list of recording dictionaries
-    return render_template("index.html", channels=channels.keys(), scheduled=scheduled, days=days_list)
+    import time
+    cache_bust = str(int(time.time()))  # Current timestamp for cache busting
+    return render_template("index.html", 
+                         channels=channels.keys(), 
+                         scheduled=scheduled, 
+                         days=days_list,
+                         cache_bust=cache_bust)
 
 @app.route("/record_now", methods=["POST"])
 def record_now():

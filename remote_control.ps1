@@ -10,10 +10,10 @@
 
 # Commands to run DVR:
 function Start-DVRWithProwlarr {
-    Set-Location "C:\Users\brixw\Desktop\code\LineDrive"
+    Set-Location $PSScriptRoot
     
     # Set environment variables
-    $env:PROWLARR_API_KEY = "73acf5d451594332bc2d50bcee137ddf"
+    $env:PROWLARR_API_KEY = "your_prowlarr_api_key_here"
     $env:PROWLARR_API_URL = "http://127.0.0.1:9696"
     
     # Start the application

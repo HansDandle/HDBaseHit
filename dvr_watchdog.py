@@ -53,7 +53,7 @@ def status():
     </button>
     </div>
     
-    <p><small>Access from phone: <a href="http://192.168.1.214:5002">http://192.168.1.214:5002</a></small></p>
+    <p><small>Access from phone: <a href="http://YOUR_PC_IP:5002">http://YOUR_PC_IP:5002</a></small></p>
     </body></html>
     '''
 
@@ -67,7 +67,7 @@ def start_dvr():
         # Start DVR with environment variables
         env = os.environ.copy()
         env.update({
-            'PROWLARR_API_KEY': '73acf5d451594332bc2d50bcee137ddf',
+            'PROWLARR_API_KEY': 'your_prowlarr_api_key_here',
             'PROWLARR_API_URL': 'http://127.0.0.1:9696',
             'BIRATEPAY_ENABLED': '1'
         })
@@ -114,7 +114,7 @@ def restart_dvr():
 
 if __name__ == '__main__':
     print("🐕 DVR Watchdog starting...")
-    print("📱 Control from phone: http://192.168.1.214:5002")
+    print("📱 Control from phone: http://YOUR_PC_IP:5002")
     print("🔧 Use this to start/stop DVR when it's not running")
     
     watchdog.run(host='0.0.0.0', port=5002, debug=False)

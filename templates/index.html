@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#222" />
     <link rel="manifest" href="/static/manifest.json" />
     <link rel="icon" type="image/jpeg" href="/static/LineDrive Logo.jpg" />
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/style.css?v={{ cache_bust }}" />
             <title>LineDrive - TV Recording</title>
 </head>
 <body>
@@ -28,7 +28,7 @@
     <div id="torrentResults" class="torrent-results" style="margin-top:1.5rem;"></div>
 
        
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v={{ cache_bust }}"></script>
 </body>
 </html>
             </select>
@@ -39,10 +39,19 @@
         <label for="channel" class="form-label">Channel</label><br>
         <select id="channel" name="channel" class="form-select">
             <option value="">Select Channel</option>
-            {% for ch in channels %}
-                <option value="{{ ch }}">{{ ch }}</option>
-            {% endfor %}
+            {% if channels %}
+                {% for ch in channels %}
+                    <option value="{{ ch }}">{{ ch }}</option>
+                {% endfor %}
+            {% else %}
+                <option value="" disabled>No HDHomeRun channels detected</option>
+            {% endif %}
         </select>
+        <!-- Debug info -->
+        <small style="color: #888; font-size: 0.75em;">
+            Channels available: {{ channels|length }} 
+            {% if channels|length == 0 %}(Configure HDHomeRun IP in Settings){% endif %}
+        </small>
     </div>
     <div>
         <label for="duration" class="form-label">Duration (min)</label><br>
@@ -336,17 +345,45 @@ async function cancelSeries(seriesName) {
 }
 </script>
 <script>
-document.getElementById('setupBtn')?.addEventListener('click', async () => {
-    try {
-        const res = await fetch('/run_setup', { method: 'POST' });
-        const j = await res.json();
-        if (j.status === 'ok') {
-            document.getElementById('result').innerText = `✅ ${j.message}`;
-        } else {
-            document.getElementById('result').innerText = `❌ Failed to launch setup: ${j.error || 'unknown error'}`;
-        }
-    } catch (e) {
-        document.getElementById('result').innerText = `❌ Failed to launch setup: ${e}`;
+// Wait for DOM to be ready before attaching event handlers
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event handlers...');
+    
+    // Setup button handler
+    const setupBtn = document.getElementById('setupBtn');
+    console.log('Setup button found:', setupBtn);
+    
+    if (setupBtn) {
+        setupBtn.addEventListener('click', async () => {
+            console.log('Settings button clicked!');
+            const resultDiv = document.getElementById('result');
+            if (!resultDiv) {
+                console.error('Result div not found');
+                alert('Settings button clicked but result area not found!');
+                return;
+            }
+            
+            resultDiv.innerText = 'Launching setup wizard...';
+            
+            try {
+                console.log('Sending request to /run_setup');
+                const res = await fetch('/run_setup', { method: 'POST' });
+                console.log('Response received:', res.status);
+                const j = await res.json();
+                console.log('Response data:', j);
+                
+                if (j.status === 'ok') {
+                    resultDiv.innerText = `✅ Settings wizard launched: ${j.message}`;
+                } else {
+                    resultDiv.innerText = `❌ Failed to launch setup: ${j.error || 'unknown error'}`;
+                }
+            } catch (e) {
+                console.error('Setup request error:', e);
+                resultDiv.innerText = `❌ Failed to launch setup: ${e}`;
+            }
+        });
+    } else {
+        console.error('Setup button not found!');
     }
 });
 

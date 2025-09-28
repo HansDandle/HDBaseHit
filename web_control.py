@@ -113,7 +113,7 @@ def restart_with_prowlarr():
         import os
         
         # Set environment variables
-        os.environ['PROWLARR_API_KEY'] = '73acf5d451594332bc2d50bcee137ddf'
+        os.environ['PROWLARR_API_KEY'] = 'your_prowlarr_api_key_here'
         os.environ['PROWLARR_API_URL'] = 'http://127.0.0.1:9696'
         
         # Test Prowlarr connection

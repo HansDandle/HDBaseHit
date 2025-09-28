@@ -12,7 +12,7 @@ if %hour% LSS 06 goto sleep_time
 if %hour% GTR 23 goto sleep_time
 
 echo ✅ Active hours detected, starting DVR...
-cd /d "C:\Users\brixw\Desktop\code\LineDrive"
+cd /d "%~dp0"
 python dvr_web.py
 
 goto end

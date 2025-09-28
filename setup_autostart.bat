@@ -9,7 +9,7 @@ schtasks /Delete /TN "DVR_AutoStart" /F >nul 2>&1
 REM Create new task that runs at startup
 schtasks /Create ^
   /TN "DVR_AutoStart" ^
-  /TR "\"C:\Users\brixw\Desktop\code\LineDrive\run_dvr_with_prowlarr.bat\"" ^
+  /TR "\"%~dp0run_dvr_with_prowlarr.bat\"" ^
   /SC ONSTART ^
   /RU "%USERNAME%" ^
   /RP ^
