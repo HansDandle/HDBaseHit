@@ -8,11 +8,13 @@ import schedule
 import time as t
 import json
 import requests
+from config_manager import get_config
 
 # === CONFIG ===
-HDHR_IP = "192.168.1.126"
-SAVE_DIR = r"F:\TV_Recordings"
-FFMPEG_PATH = r"C:\FFMPEG\ffmpeg-2025-08-25-git-1b62f9d3ae-essentials_build\bin\ffmpeg.exe"
+config = get_config()
+HDHR_IP = config.get_hdhr_ip()
+SAVE_DIR = str(config.get_recording_dir())
+FFMPEG_PATH = config.get_ffmpeg_path()
 SCHEDULE_FILE = os.path.join(SAVE_DIR, "scheduled_jobs.json")
 
 os.makedirs(SAVE_DIR, exist_ok=True)

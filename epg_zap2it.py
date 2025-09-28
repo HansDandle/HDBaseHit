@@ -154,10 +154,49 @@ def search_epg_for_show(show_name, days=7):
         'iowa state': ['iowa state', 'cyclones'],
         'west virginia': ['west virginia', 'wvu', 'mountaineers']
     }
-    
+
+    # NFL team mappings (team name -> possible variations / abbreviations)
+    nfl_teams = {
+        'dallas cowboys': ['dallas cowboys', 'cowboys', 'dallas', 'dal'],
+        'new york giants': ['new york giants', 'giants', 'nyg'],
+        'philadelphia eagles': ['philadelphia eagles', 'eagles', 'phi'],
+        'washington commanders': ['washington commanders', 'commanders', 'washington', 'was'],
+        'san francisco 49ers': ['san francisco 49ers', '49ers', 'niners', 'sf', 'sfo'],
+        'seattle seahawks': ['seattle seahawks', 'seahawks', 'sea'],
+        'los angeles rams': ['los angeles rams', 'rams', 'la rams', 'lar'],
+        'arizona cardinals': ['arizona cardinals', 'cardinals', 'cards', 'ari'],
+        'green bay packers': ['green bay packers', 'packers', 'gb'],
+        'chicago bears': ['chicago bears', 'bears', 'chi'],
+        'detroit lions': ['detroit lions', 'lions', 'det'],
+        'minnesota vikings': ['minnesota vikings', 'vikings', 'min'],
+        'tampa bay buccaneers': ['tampa bay buccaneers', 'buccaneers', 'bucs', 'tb'],
+        'new orleans saints': ['new orleans saints', 'saints', 'no', 'nor'],
+        'atlanta falcons': ['atlanta falcons', 'falcons', 'atl'],
+        'carolina panthers': ['carolina panthers', 'panthers', 'carolina', 'car'],
+        'kansas city chiefs': ['kansas city chiefs', 'chiefs', 'kc'],
+        'denver broncos': ['denver broncos', 'broncos', 'den'],
+        'las vegas raiders': ['las vegas raiders', 'raiders', 'lv', 'lar'],
+        'los angeles chargers': ['los angeles chargers', 'chargers', 'la chargers', 'lac'],
+        'buffalo bills': ['buffalo bills', 'bills', 'buf'],
+        'miami dolphins': ['miami dolphins', 'dolphins', 'mia'],
+        'new england patriots': ['new england patriots', 'patriots', 'pats', 'ne', 'nep'],
+        'new york jets': ['new york jets', 'jets', 'nyj'],
+        'baltimore ravens': ['baltimore ravens', 'ravens', 'bal'],
+        'pittsburgh steelers': ['pittsburgh steelers', 'steelers', 'pit'],
+        'cleveland browns': ['cleveland browns', 'browns', 'cle'],
+        'cincinnati bengals': ['cincinnati bengals', 'bengals', 'cin'],
+        'houston texans': ['houston texans', 'texans', 'hou'],
+        'indianapolis colts': ['indianapolis colts', 'colts', 'ind'],
+        'jacksonville jaguars': ['jacksonville jaguars', 'jaguars', 'jags', 'jax'],
+        'tennessee titans': ['tennessee titans', 'titans', 'ten']
+    }
+
+    # Merge NFL first to prioritize pro teams in ambiguous nickname cases (e.g., Cowboys)
+    team_mappings = {**nfl_teams, **college_teams}
+
     # Flatten team variations for easier searching
     all_team_variations = []
-    for variations in college_teams.values():
+    for variations in team_mappings.values():
         all_team_variations.extend(variations)
     
     is_sports_query = any(term in show_name_lower for term in sports_terms)
@@ -216,23 +255,53 @@ def search_epg_for_show(show_name, days=7):
             is_actual_game = any(indicator in title.lower() or indicator in description.lower() 
                                for indicator in actual_game_indicators)
             
-            # Enhanced team matching - check if any team from query appears in title/description
-            for team_name, variations in college_teams.items():
+            # Enhanced team matching - unified college + NFL
+            for team_name, variations in team_mappings.items():
                 # Check if any variation of this team is mentioned in the search query
                 query_mentions_team = any(variation in show_name_lower for variation in variations)
-                
-                if query_mentions_team:
-                    # Check if this team appears in the program title or description
-                    program_mentions_team = any(variation in title.lower() or variation in description.lower() for variation in variations)
-                    
-                    if program_mentions_team:
-                        if is_actual_game:
-                            match_score += 100  # Very high score for actual team games
-                        elif is_preview_show:
-                            match_score += 5    # Very low score for preview shows
-                        else:
-                            match_score += 50   # Medium score for team-related content
-                        break
+
+                if not query_mentions_team:
+                    continue
+
+                # Check if this team appears in the program title or description
+                program_mentions_team = any(variation in title or variation in description for variation in variations)
+
+                if not program_mentions_team:
+                    continue
+
+                is_nfl_team = team_name in nfl_teams
+                is_college_team = not is_nfl_team
+
+                # Additional NFL context bonus if generic listing
+                nfl_context = ('nfl' in title or 'nfl' in description or 'nfl football' in title or 'nfl football' in description)
+
+                if is_actual_game:
+                    if is_nfl_team:
+                        # Higher score for actual NFL game
+                        match_score += 120
+                        if nfl_context:
+                            match_score += 15
+                        # Extra disambiguation: Cowboys - ensure Dallas context outranks Oklahoma State
+                        if 'cowboys' in variations and 'dallas' in (title + ' ' + description):
+                            match_score += 10
+                    else:
+                        match_score += 100  # College actual game
+                elif is_preview_show:
+                    match_score += 5  # cap applied later
+                else:
+                    # Medium content (features, specials) - give slight differentiation
+                    if is_nfl_team:
+                        base = 55
+                        if nfl_context:
+                            base += 10
+                        match_score += base
+                    else:
+                        match_score += 50
+                # Mark program with team match metadata for downstream logic (UI, suppression rules)
+                program['team_match'] = True
+                program.setdefault('matched_teams', []).append(team_name)
+                # Break after first team match to avoid double-counting (NFL prioritized earlier in mapping)
+                break
             
             # Generic sports content matching
             if 'football' in show_name_lower:

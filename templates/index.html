@@ -11,6 +11,19 @@
 <body>
     <div id="app" class="centered-app">
         <h1>TV Home Media Automation</h1>
+        <div style="margin: .25rem 0 1rem;">
+            <a href="/recent_recordings" target="_blank" style="font-size:.95rem; text-decoration:none;">
+                📄 View Recent Recordings (JSON)
+            </a>
+            <span style="margin:0 .5rem; color:#888;">•</span>
+            <a href="/recurring_status" target="_blank" style="font-size:.95rem; text-decoration:none;">
+                🔁 Recurring Status
+            </a>
+            <span style="margin:0 .5rem; color:#888;">•</span>
+            <button type="button" id="openFolderBtn" style="font-size:.95rem;">📂 Open Recordings Folder</button>
+            <span style="margin:0 .5rem; color:#888;">•</span>
+            <button type="button" id="autoCategorizeBtn" style="font-size:.95rem;">📋 Auto-Categorize Torrents</button>
+        </div>
         <!-- PWA/NLP Controls -->
         <form id="nlpForm">
             <input type="text" id="commandInput" placeholder="Type or speak a command..." autocomplete="off" required />
@@ -19,6 +32,7 @@
         </form>
         <button id="wolBtn">Wake PC</button>
         <div id="result"></div>
+    <div id="torrentResults" class="torrent-results" style="margin-top:1.5rem;"></div>
 
        
     <script src="/static/js/app.js"></script>
@@ -123,6 +137,26 @@
                                 Time-Based Series • {{ job.recurrence.description }} • Records automatically every week
                                 {% else %}
                                 Recurring Series • {{ job.recurrence.description }}
+                                {% endif %}
+                                {% if job.recurrence and job.recurrence.pattern == 'weekly' and job.sample_episodes %}
+                                {% if job.explicit_weekday or job.explicit_weekdays %}
+                                <span class="badge bg-secondary ms-2">Requested: 
+                                    {% if job.explicit_weekdays %}
+                                        {{ job.explicit_weekdays|join(', ') }}
+                                    {% else %}
+                                        {{ job.explicit_weekday }}
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                                {% endif %}
+                                {% if job.time %}
+                                <span class="badge bg-dark ms-1">@ {{ job.time }}</span>
+                                {% endif %}
+                                {% if job.retention_weeks %}
+                                <span class="badge bg-warning text-dark ms-1">For {{ job.retention_weeks }} week{% if job.retention_weeks>1 %}s{% endif %}</span>
+                                {% endif %}
+                                {% if job.retention_until %}
+                                <span class="badge bg-warning text-dark ms-1">Until {{ job.retention_until }}</span>
                                 {% endif %}
                             </div>
                             <div class="text-muted small">
@@ -307,6 +341,21 @@ async function cancelSeries(seriesName) {
         window.location.reload();
     }
 }
+</script>
+<script>
+document.getElementById('openFolderBtn')?.addEventListener('click', async () => {
+    try {
+        const res = await fetch('/open_recordings_folder', { method: 'POST' });
+        const j = await res.json();
+        if (j.status === 'ok') {
+            document.getElementById('progress').innerText = `Opened folder: ${j.opened}`;
+        } else {
+            document.getElementById('progress').innerText = `Failed to open folder: ${j.error || 'unknown error'}`;
+        }
+    } catch (e) {
+        document.getElementById('progress').innerText = `Failed to open folder: ${e}`;
+    }
+});
 </script>
 </body>
 </html>

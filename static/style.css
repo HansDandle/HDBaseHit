@@ -23,6 +23,207 @@ h1 {
   align-items: center;
 }
 
+/* Expanded results area for torrents: occupy more horizontal space on wider screens */
+.torrent-results {
+  width: 100%;
+  max-width: 960px;
+  margin: 1rem auto;
+  background: #202020;
+  border-radius: 10px;
+  padding: 0.75rem 0.75rem 1rem 0.75rem;
+  box-shadow: 0 2px 10px #000a;
+  overflow-x: auto; /* allow horizontal scroll if absolutely necessary */
+}
+
+.torrent-results h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  letter-spacing: .5px;
+}
+
+table.torrent-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* consistent cell widths */
+}
+
+table.torrent-table th, table.torrent-table td {
+  padding: 0.4rem 0.45rem;
+  vertical-align: middle;
+  font-weight: normal;
+}
+
+/* Two-row layout adjustments */
+table.torrent-table.two-row-mode .torrent-row-title td.title-span {
+  padding-top: 0.55rem;
+  padding-bottom: 0.2rem;
+  font-size: 0.72rem;
+  line-height: 1.05rem;
+}
+table.torrent-table.two-row-mode .full-title {
+  font-weight: 600;
+  display: inline-block;
+  max-width: 100%;
+  white-space: normal;
+  word-break: break-word;
+}
+table.torrent-table.two-row-mode .torrent-row-meta td {
+  font-size: 0.62rem;
+}
+table.torrent-table.two-row-mode .torrent-row-meta td.meta-placeholder { color:#555; }
+table.torrent-table.two-row-mode .torrent-row-title + .torrent-row-meta td { border-top:0; }
+table.torrent-table.two-row-mode .torrent-row-meta { background:#1e1e1e; }
+table.torrent-table.two-row-mode .torrent-row-title { background:#222; }
+table.torrent-table.two-row-mode .torrent-row-meta td button.btn { font-size:0.6rem; }
+@media (max-width: 680px){
+  table.torrent-table.two-row-mode .torrent-row-title td.title-span { font-size:0.78rem; }
+  table.torrent-table.two-row-mode .torrent-row-meta td { font-size:0.68rem; }
+}
+
+table.torrent-table thead th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #bbb;
+  border-bottom: 1px solid #333;
+}
+
+/* Title column: multi-line clamp on mobile, ellipsis on wide */
+table.torrent-table td.title-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Enhanced torrent title styling for mobile readability */
+.torrent-title-wrapper { position: relative; }
+.torrent-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Safari/WebKit */
+  line-clamp: 2; /* Draft standard */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.1rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color .15s;
+  word-break: break-word;
+}
+.torrent-title:hover { color:#d0e6ff; }
+.torrent-title.expanded { -webkit-line-clamp: unset; line-clamp: unset; max-height:none; }
+.torrent-title:after {
+  content: attr(data-more);
+  font-size: .6rem;
+  color:#68a7ff;
+  margin-left:.35rem;
+  opacity:.85;
+}
+.torrent-title.expanded:after { content: attr(data-less); }
+.torrent-meta-row { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.2rem; font-size:.55rem; color:#bbb; }
+.torrent-badge { background:#2d2d2d; padding:2px 6px; border-radius:4px; margin-right:6px; color:#ccc; display:inline-block; }
+
+/* Expand details button */
+.torrent-expand-btn {
+  background: #2c2c2c;
+  color: #ccc;
+  border: 1px solid #3a3a3a;
+  font-size: 0.55rem;
+  padding: 2px 4px;
+  margin-left: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  line-height: 1;
+}
+.torrent-expand-btn:hover { background:#3a3a3a; color:#fff; }
+.torrent-expand-btn[aria-expanded="true"] { background:#085a9c; color:#fff; border-color:#0a6bb2; }
+
+/* Details panel */
+.torrent-details {
+  margin-top: 4px;
+  background:#1a1a1a;
+  border:1px solid #333;
+  border-radius:6px;
+  padding:4px 6px 6px 6px;
+  font-size:0.58rem;
+  line-height:0.9rem;
+  max-width: 480px;
+  box-shadow: 0 1px 3px #0008;
+}
+.torrent-detail-line { margin-top:2px; word-break:break-word; }
+.torrent-detail-line strong { color:#d0d0d0; font-weight:600; }
+
+@media (max-width: 680px) {
+  .torrent-details { font-size:0.62rem; line-height:0.95rem; }
+}
+
+@media (min-width:681px){
+  .torrent-title { font-size:0.75rem; }
+}
+
+@media (max-width: 680px) {
+  /* Let the title wrap for small screens */
+  table.torrent-table td.title-cell {
+    white-space: normal;
+    line-height: 1.15rem;
+    max-height: 2.3rem; /* ~2 lines */
+    overflow: hidden;
+    position: relative;
+  }
+  table.torrent-table td.title-cell:after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40%;
+    height: 1rem;
+    background: linear-gradient(90deg, rgba(32,32,32,0), #202020 90%);
+  }
+  /* Suppress gradient when enhanced wrapper is used */
+  table.torrent-table td.title-cell.enhanced:after { display:none; }
+  .torrent-results {
+    padding: 0.5rem 0.5rem 0.75rem 0.5rem;
+  }
+  table.torrent-table th, table.torrent-table td {
+    padding: 0.35rem 0.35rem;
+    font-size: 0.72rem;
+  }
+  table.torrent-table thead th { font-size: 0.6rem; }
+}
+
+/* Narrow column sizing */
+table.torrent-table th:nth-child(1),
+table.torrent-table td:nth-child(1) { width: 34px; }
+table.torrent-table th:nth-child(3),
+table.torrent-table td:nth-child(3),
+table.torrent-table th:nth-child(4),
+table.torrent-table td:nth-child(4),
+table.torrent-table th:nth-child(5),
+table.torrent-table td:nth-child(5),
+table.torrent-table th:nth-child(6),
+table.torrent-table td:nth-child(6) { text-align: right; white-space: nowrap; }
+
+table.torrent-table td button {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+/* Checkbox column */
+table.torrent-table th:last-child,
+table.torrent-table td:last-child { text-align: center; width: 28px; }
+
+/* Improve Get button visibility on dark background */
+table.torrent-table td button.btn {
+  background: #0078d4;
+  border: 1px solid #2791e7;
+}
+table.torrent-table td button.btn:hover { background:#0a6bb2; }
+
+/* Utility buttons row */
+.torrent-results .btn { font-size: 0.7rem; }
+@media (max-width: 480px){ .torrent-results .btn { font-size: 0.65rem; padding:0.35rem 0.55rem; }}
+
 form {
   display: flex;
   gap: 0.5rem;

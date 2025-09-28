@@ -1,0 +1,34 @@
+{
+  "hdhr": {
+    "ip_address": "192.168.1.100",
+    "comment": "IP address of your HDHomeRun tuner device"
+  },
+  "directories": {
+    "recordings": "~/TV_Recordings",
+    "tv_shows": "~/TV Shows",
+    "movies": "~/Movies",
+    "comment": "Directory paths for storing recordings and media. Use ~ for home directory or absolute paths"
+  },
+  "ffmpeg": {
+    "path": "ffmpeg",
+    "comment": "Path to ffmpeg executable. Use 'ffmpeg' if it's in your PATH, or full path to executable"
+  },
+  "prowlarr": {
+    "enabled": false,
+    "api_url": "http://127.0.0.1:9696",
+    "api_key": "",
+    "timeout": 15,
+    "comment": "Prowlarr integration settings for torrent searching. Set enabled to true and provide API key to use"
+  },
+  "biratepay": {
+    "enabled": false,
+    "port": 5055,
+    "comment": "BiratePayment integration for premium content access"
+  },
+  "web_interface": {
+    "host": "0.0.0.0",
+    "port": 5000,
+    "debug": false,
+    "comment": "Web interface settings"
+  }
+}
