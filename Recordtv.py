@@ -252,10 +252,15 @@ def load_schedule():
         listbox_scheduled.insert(tk.END, desc)
 
 # === GUI ===
+# Legal notice
+print("⚠️  LEGAL NOTICE: This software is for legitimate, legal use only.")
+print("   Only record over-the-air content you are legally entitled to receive.")
+print("   Users are responsible for complying with all applicable copyright laws.")
+
 # Add format selection to GUI
 
 root = tk.Tk()
-root.title("HDHomeRun DVR")
+root.title("HDHomeRun DVR - Legal Use Only")
 
 frame = ttk.Frame(root, padding=20)
 frame.grid()

@@ -3523,6 +3523,12 @@ def bulk_download():
     })
 
 if __name__=="__main__":
+    # Legal notice
+    print("⚠️  LEGAL NOTICE: This software is for legitimate, legal use only.")
+    print("   Only record over-the-air content you are legally entitled to receive.")
+    print("   Users are responsible for complying with all applicable copyright laws.")
+    print()
+    
     # Load existing scheduled recordings
     load_schedule()
 

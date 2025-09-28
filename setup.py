@@ -18,6 +18,10 @@ def print_banner():
     print("    TV Recorder for HDHomeRun - Interactive Setup")
     print("=" * 60)
     print()
+    print("⚠️  LEGAL NOTICE: This software is for legitimate, legal use only.")
+    print("   Only record content you are legally entitled to receive.")
+    print("   Users are responsible for complying with copyright laws.")
+    print()
 
 def test_ffmpeg(ffmpeg_path):
     """Test if ffmpeg is available"""

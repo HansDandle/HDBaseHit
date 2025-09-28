@@ -385,6 +385,34 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Prowlarr](https://prowlarr.com/) for indexer management
 - [Zap2it](https://www.zap2it.com/) for EPG data
 
+## Legal Disclaimer
+
+**⚠️ IMPORTANT LEGAL NOTICE ⚠️**
+
+This software is intended for **legitimate, legal use only**. Users are responsible for complying with all applicable laws and regulations.
+
+### Permitted Uses
+- Recording **over-the-air broadcast television** that you are legally entitled to receive
+- Recording content from **your own HDHomeRun tuner device**
+- Personal time-shifting of broadcast content for **private, non-commercial use**
+- Managing and organizing **your own legally recorded content**
+
+### Prohibited Uses
+- **DO NOT** use this software to download, distribute, or share copyrighted materials without permission
+- **DO NOT** use torrent integration features to download copyrighted content illegally
+- **DO NOT** circumvent copy protection or access controls
+- **DO NOT** distribute recorded content beyond personal/household use
+
+### User Responsibility
+- **You are solely responsible** for ensuring your use complies with copyright law
+- **You are responsible** for understanding and following your local broadcasting and copyright regulations
+- **The developers assume no liability** for misuse of this software
+
+### Torrent Integration Notice
+The optional Prowlarr integration is provided for legitimate content discovery only. Users must ensure any content accessed through these features complies with applicable copyright laws.
+
+**By using this software, you acknowledge that you understand and will comply with all applicable laws.**\n\n📋 **For detailed legal terms and guidelines, see [LEGAL.md](LEGAL.md)**
+
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/YourUsername/TV_Recorder_pub/issues)
