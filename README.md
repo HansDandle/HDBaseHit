@@ -68,12 +68,40 @@ A comprehensive TV recording solution for HDHomeRun network tuners with web inte
 
 ### First-Time Setup
 
-Run the interactive setup wizard:
+LineDrive offers multiple setup options:
+
+**Option 1: Smart Setup Launcher (Recommended)**
+```bash
+python launch_setup.py
+```
+Or double-click `run_setup_gui.bat` on Windows
+
+**Option 2: Direct GUI Setup**
+```bash
+python setup_gui.py
+```
+
+**Option 3: Console Setup**
 ```bash
 python setup.py
 ```
 
-This will create a `config.json` file with your settings.
+The **Smart Launcher** automatically:
+- ✅ Checks for GUI dependencies
+- 🖥️ Launches GUI setup if available
+- 📱 Falls back to console setup if needed
+- 🔧 Provides installation help for missing dependencies
+
+The **GUI Setup** provides:
+- 📁 Directory browser for easy folder selection
+- 🔍 Auto-detection of HDHomeRun devices
+- ✅ Real-time connection testing
+- 🎛️ Interactive configuration with visual feedback
+- 💾 Automatic directory creation
+- 🛡️ Input validation and error checking
+- 💡 Helpful tooltips and guidance
+
+All methods create a `config.json` file with your settings.
 
 ### ⚠️ Important: Replace Placeholder Values
 

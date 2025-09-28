@@ -134,17 +134,39 @@ class IndexerManager:
         results = []
         
         for item in data[:limit]:
+            # Extract magnet link from multiple possible fields
+            magnet_link = (
+                item.get('magnetUrl') or 
+                item.get('magnet') or 
+                item.get('downloadUrl') or 
+                item.get('link') or 
+                item.get('guid') or 
+                ''
+            )
+            
+            # Ensure it's a proper magnet link
+            if magnet_link and not magnet_link.startswith('magnet:'):
+                # Some indexers return download URLs that need to be converted
+                if 'magnet:' in magnet_link:
+                    # Extract magnet part if it's embedded in a longer URL
+                    import re
+                    magnet_match = re.search(r'magnet:[^&\s"\']+', magnet_link)
+                    if magnet_match:
+                        magnet_link = magnet_match.group(0)
+            
             result = {
                 'title': item.get('title', ''),
                 'size': item.get('size', 0),
                 'seeders': item.get('seeders', 0),
                 'leechers': item.get('leechers', 0), 
                 'download_url': item.get('downloadUrl', ''),
-                'magnet_url': item.get('magnetUrl', ''),
+                'magnet_url': magnet_link,  # Use improved magnet extraction
+                'magnet': magnet_link,      # Also provide 'magnet' field for compatibility
                 'info_url': item.get('infoUrl', ''),
                 'indexer': item.get('indexer', ''),
                 'category': item.get('categories', []),
-                'publish_date': item.get('publishDate', '')
+                'publish_date': item.get('publishDate', ''),
+                'infoHash': item.get('infoHash', '')
             }
             results.append(result)
         

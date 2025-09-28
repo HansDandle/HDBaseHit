@@ -2206,23 +2206,68 @@ def agent_download(parsed):
             torrents = LAST_TORRENT_SEARCH.get('torrents')
             if 0 <= idx < len(torrents):
                 chosen = torrents[idx]
-                magnet = chosen.get('magnet')
+                
+                # Try multiple fields for magnet link
+                magnet = (
+                    chosen.get('magnet') or 
+                    chosen.get('magnet_url') or 
+                    chosen.get('magnetUrl') or 
+                    chosen.get('download_url') or
+                    chosen.get('downloadUrl') or
+                    ''
+                )
+                
                 if not magnet:
+                    print(f"❌ No magnet link found for torrent {idx+1}")
+                    print(f"📋 Available fields: {list(chosen.keys())}")
+                    print(f"📊 Torrent data: {chosen}")
                     return {"error": "Selected entry has no magnet link"}
                 
-                # Use VPN-protected download
-                result = add_magnet_with_vpn(magnet, chosen)
-                if result.get('status') == 'success':
-                    return {
-                        "status": "download_started",
-                        "message": f"Started torrent from option {idx+1} - {chosen.get('title')[:120]}",
-                        "selected_index": idx + 1,
-                        "torrent": {k: chosen.get(k) for k in ('title','seeds','leeches','size_bytes','uploader','category','subcat')},
-                        "query": LAST_TORRENT_SEARCH.get('query'),
-                    }
-                else:
-                    return result
-                    return {"error": f"Selection add error: {e}"}
+                if not magnet.startswith('magnet:'):
+                    print(f"❌ Invalid magnet link format: {magnet}")
+                    return {"error": "Invalid magnet link format"}
+                
+                # Use torrent client manager to add torrent
+                try:
+                    from torrent_client_manager import TorrentClientManager
+                    from config_manager import get_config
+                    
+                    config = get_config()
+                    torrent_client = TorrentClientManager(config)
+                    
+                    # Determine category and save path
+                    content_type = parsed.get('content_type', 'tv')
+                    category = 'tv' if content_type == 'tv' else 'movies'
+                    save_path = parsed.get('target_root')
+                    
+                    print(f"🔄 Adding torrent to {torrent_client.client_type}: {chosen.get('title', 'Unknown')[:60]}...")
+                    print(f"📎 Magnet: {magnet[:100]}...")
+                    
+                    result = torrent_client.add_torrent(magnet, category=category, save_path=save_path)
+                    
+                    if result.get('success'):
+                        return {
+                            "status": "download_started",
+                            "message": f"✅ Torrent added to {torrent_client.client_type}: {chosen.get('title', 'Unknown')[:80]}",
+                            "selected_index": idx + 1,
+                            "torrent": {
+                                'title': chosen.get('title', 'Unknown'),
+                                'seeders': chosen.get('seeders', chosen.get('seeds', 0)),
+                                'leechers': chosen.get('leechers', chosen.get('leeches', 0)),
+                                'size': chosen.get('size', chosen.get('size_bytes', 0)),
+                                'category': category,
+                                'indexer': chosen.get('indexer', 'Unknown')
+                            },
+                            "query": LAST_TORRENT_SEARCH.get('query'),
+                        }
+                    else:
+                        error_msg = result.get('error', 'Unknown error')
+                        print(f"❌ Failed to add torrent: {error_msg}")
+                        return {"error": f"Failed to add torrent: {error_msg}"}
+                        
+                except Exception as e:
+                    print(f"❌ Torrent client error: {str(e)}")
+                    return {"error": f"Torrent client error: {str(e)}"}
             else:
                 return {"error": f"Option out of range. Provide 1-{len(torrents)}"}
         elif multi_match and LAST_TORRENT_SEARCH.get('torrents'):
@@ -2340,11 +2385,23 @@ def agent_download(parsed):
                                 'query': query,
                                 'timestamp': time.time() if 'time' in globals() else None
                             }
-                            # Annotate each with an index for UI convenience
+                            # Annotate each with an index for UI convenience and normalize magnet fields
                             enriched = []
                             for i, t in enumerate(LAST_TORRENT_SEARCH['torrents'], start=1):
                                 t_copy = dict(t)
                                 t_copy['option'] = i
+                                
+                                # Normalize magnet field - ensure 'magnet' field exists
+                                if 'magnet' not in t_copy or not t_copy['magnet']:
+                                    # Try to get magnet from other fields
+                                    magnet_link = (
+                                        t_copy.get('magnet_url') or 
+                                        t_copy.get('magnetUrl') or 
+                                        t_copy.get('download_url') or 
+                                        t_copy.get('downloadUrl') or 
+                                        ''
+                                    )
+                                    t_copy['magnet'] = magnet_link
                                 enriched.append(t_copy)
                             return {
                                 "status": "search_results",
@@ -2959,15 +3016,14 @@ def open_recordings_folder():
 
 @app.route('/run_setup', methods=['POST','GET'])
 def run_setup():
-    """Run the LineDrive setup wizard."""
+    """Run the LineDrive setup wizard GUI."""
     try:
         import subprocess
         import sys
-        # Run setup.py in a new process
-        result = subprocess.Popen([sys.executable, 'setup.py'], 
-                                cwd=os.path.dirname(os.path.abspath(__file__)),
-                                creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0)
-        return jsonify({'status': 'ok', 'message': 'Setup wizard launched in new window', 'pid': result.pid})
+        # Use the smart setup launcher
+        result = subprocess.Popen([sys.executable, 'launch_setup.py'], 
+                                cwd=os.path.dirname(os.path.abspath(__file__)))
+        return jsonify({'status': 'ok', 'message': 'Setup wizard launched successfully', 'pid': result.pid})
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
