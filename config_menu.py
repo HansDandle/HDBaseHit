@@ -25,14 +25,15 @@ class ConfigMenu:
             print("2. Directory Settings") 
             print("3. FFmpeg Settings")
             print("4. EPG (TV Listings) Settings")
-            print("5. Prowlarr Integration")
-            print("6. Web Interface Settings")
-            print("7. View Current Configuration")
-            print("8. Save & Exit")
-            print("9. Exit Without Saving")
+            print("5. VPN Settings")
+            print("6. Indexer Integration")
+            print("7. Web Interface Settings")
+            print("8. View Current Configuration")
+            print("9. Save & Exit")
+            print("10. Exit Without Saving")
             print()
             
-            choice = input("Select option (1-9): ").strip()
+            choice = input("Select option (1-10): ").strip()
             
             if choice == '1':
                 self.hdhr_menu()
@@ -43,15 +44,17 @@ class ConfigMenu:
             elif choice == '4':
                 self.epg_menu()
             elif choice == '5':
-                self.prowlarr_menu()
+                self.vpn_menu()
             elif choice == '6':
-                self.web_interface_menu()
+                self.indexer_menu()
             elif choice == '7':
-                self.view_config()
+                self.web_interface_menu()
             elif choice == '8':
+                self.view_config()
+            elif choice == '9':
                 self.save_and_exit()
                 break
-            elif choice == '9':
+            elif choice == '10':
                 print("Exiting without saving...")
                 break
             else:
@@ -211,53 +214,162 @@ class ConfigMenu:
             else:
                 input("Invalid choice. Press Enter to continue...")
     
-    def prowlarr_menu(self):
-        """Prowlarr configuration menu"""
+    def vpn_menu(self):
+        """VPN configuration menu"""
         while True:
             self.clear_screen()
             print("=" * 50)
-            print("    Prowlarr Integration")
+            print("    VPN Settings")
             print("=" * 50)
             print()
-            enabled = self.config.is_prowlarr_enabled()
-            prowlarr_config = self.config.get_prowlarr_config()
             
-            print(f"Enabled: {'Yes' if enabled else 'No'}")
-            print(f"API URL: {prowlarr_config['api_url']}")
-            print(f"API Key: {'*' * len(prowlarr_config['api_key']) if prowlarr_config['api_key'] else 'Not set'}")
-            print()
-            print("1. Enable/Disable Prowlarr")
-            print("2. Change API URL")
-            print("3. Change API Key")
-            print("4. Test Connection")
-            print("5. Back to Main Menu")
+            vpn_config = self.config.get('vpn', {})
+            enabled = vpn_config.get('enabled', False)
+            provider = vpn_config.get('provider', 'none')
+            
+            print(f"Current Status: {'Enabled' if enabled else 'Disabled'}")
+            if enabled:
+                print(f"Provider: {provider}")
+                print(f"Auto-connect: {vpn_config.get('auto_connect', False)}")
+                print(f"Required for torrents: {vpn_config.get('required_for_torrents', True)}")
             print()
             
-            choice = input("Select option (1-5): ").strip()
+            print("1. Enable/Disable VPN")
+            print("2. Change VPN Provider")  
+            print("3. Configure Auto-connect")
+            print("4. Configure Torrent Requirements")
+            print("5. Test VPN Connection")
+            print("6. Back to Main Menu")
+            print()
+            
+            choice = input("Select option (1-6): ").strip()
             
             if choice == '1':
-                self.config.set('prowlarr', 'enabled', not enabled)
-                status = "enabled" if not enabled else "disabled"
-                print(f"Prowlarr {status}")
-                input("Press Enter to continue...")
+                self.toggle_vpn()
             elif choice == '2':
-                new_url = input(f"Enter API URL [{prowlarr_config['api_url']}]: ").strip()
-                if new_url:
-                    self.config.set('prowlarr', 'api_url', new_url)
-                    print(f"API URL updated to: {new_url}")
-                    input("Press Enter to continue...")
+                self.configure_vpn_provider()
             elif choice == '3':
-                new_key = input("Enter API Key: ").strip()
-                if new_key:
-                    self.config.set('prowlarr', 'api_key', new_key)
-                    print("API key updated")
-                    input("Press Enter to continue...")
+                self.configure_vpn_autoconnect()
             elif choice == '4':
-                self.test_prowlarr()
+                self.configure_vpn_torrent_requirements()
             elif choice == '5':
+                self.test_vpn_connection()
+            elif choice == '6':
                 break
             else:
                 input("Invalid choice. Press Enter to continue...")
+    
+    def indexer_menu(self):
+        """Indexer configuration menu"""
+        while True:
+            self.clear_screen()
+            print("=" * 50)
+            print("    Indexer Integration")
+            print("=" * 50)
+            print()
+            
+            indexer_config = self.config.get_indexer_config()
+            enabled = indexer_config['enabled']
+            provider = indexer_config['provider']
+            provider_config = indexer_config['providers'].get(provider, {})
+            
+            print(f"Enabled: {'Yes' if enabled else 'No'}")
+            print(f"Provider: {provider}")
+            print(f"API URL: {provider_config.get('api_url', 'Not configured')}")
+            print(f"API Key: {'*' * len(provider_config.get('api_key', '')) if provider_config.get('api_key') else 'Not set'}")
+            print()
+            print("1. Enable/Disable Indexer")
+            print("2. Change Provider")
+            print("3. Configure API URL")
+            print("4. Configure API Key") 
+            print("5. Test Connection")
+            print("6. Back to Main Menu")
+            print()
+            
+            choice = input("Select option (1-6): ").strip()
+            
+            if choice == '1':
+                self.config.set('indexer', 'enabled', not enabled)
+                status = "enabled" if not enabled else "disabled"
+                print(f"Indexer {status}")
+                input("Press Enter to continue...")
+            elif choice == '2':
+                providers = ["prowlarr", "jackett", "torznab"]
+                print("Available providers:")
+                for i, p in enumerate(providers, 1):
+                    print(f"  {i}. {p}")
+                
+                try:
+                    choice = int(input(f"Select provider (1-{len(providers)}): ")) - 1
+                    if 0 <= choice < len(providers):
+                        new_provider = providers[choice]
+                        self.config.set('indexer', 'provider', new_provider)
+                        print(f"Provider changed to: {new_provider}")
+                        input("Press Enter to continue...")
+                except (ValueError, IndexError):
+                    print("Invalid choice")
+                    input("Press Enter to continue...")
+            elif choice == '3':
+                current_url = provider_config.get('api_url', '')
+                new_url = input(f"Enter API URL [{current_url}]: ").strip()
+                if new_url:
+                    # Update the provider-specific configuration
+                    if 'indexer' not in self.config.config:
+                        self.config.config['indexer'] = {}
+                    if 'providers' not in self.config.config['indexer']:
+                        self.config.config['indexer']['providers'] = {}
+                    if provider not in self.config.config['indexer']['providers']:
+                        self.config.config['indexer']['providers'][provider] = {}
+                    
+                    self.config.config['indexer']['providers'][provider]['api_url'] = new_url
+                    print(f"API URL updated to: {new_url}")
+                    input("Press Enter to continue...")
+            elif choice == '4':
+                new_key = input("Enter API Key: ").strip()
+                if new_key:
+                    # Update the provider-specific configuration
+                    if 'indexer' not in self.config.config:
+                        self.config.config['indexer'] = {}
+                    if 'providers' not in self.config.config['indexer']:
+                        self.config.config['indexer']['providers'] = {}
+                    if provider not in self.config.config['indexer']['providers']:
+                        self.config.config['indexer']['providers'][provider] = {}
+                    
+                    self.config.config['indexer']['providers'][provider]['api_key'] = new_key
+                    print("API key updated")
+                    input("Press Enter to continue...")
+            elif choice == '5':
+                self.test_indexer_connection()
+            elif choice == '6':
+                break
+            else:
+                input("Invalid choice. Press Enter to continue...")
+    
+    def test_indexer_connection(self):
+        """Test indexer connection"""
+        try:
+            from indexer_manager import IndexerManager
+            
+            indexer_config = self.config.get_indexer_config()
+            if not indexer_config['enabled']:
+                print("Indexer is disabled. Please enable it first.")
+                input("Press Enter to continue...")
+                return
+            
+            indexer = IndexerManager(indexer_config)
+            result = indexer.test_connection()
+            
+            if result['success']:
+                print(f"Connection successful: {result['message']}")
+            else:
+                print(f"Connection failed: {result['error']}")
+                
+        except ImportError:
+            print("Indexer manager not available.")
+        except Exception as e:
+            print(f"Test failed: {e}")
+        
+        input("Press Enter to continue...")
     
     def web_interface_menu(self):
         """Web interface configuration menu"""
@@ -570,6 +682,105 @@ class ConfigMenu:
                 
         except Exception as e:
             print(f"✗ Auto-detection failed: {e}")
+        
+        input("Press Enter to continue...")
+    
+    def toggle_vpn(self):
+        """Enable/disable VPN integration"""
+        current = self.config.get('vpn', {}).get('enabled', False)
+        new_state = not current
+        
+        if 'vpn' not in self.config:
+            self.config['vpn'] = {}
+        
+        self.config['vpn']['enabled'] = new_state
+        print(f"VPN integration {'enabled' if new_state else 'disabled'}.")
+        input("Press Enter to continue...")
+    
+    def configure_vpn_provider(self):
+        """Configure VPN provider"""
+        print("\nSupported VPN Providers:")
+        providers = ["nordvpn", "expressvpn", "protonvpn", "surfshark", "generic"]
+        for i, provider in enumerate(providers, 1):
+            print(f"  {i}. {provider}")
+        
+        while True:
+            choice = input(f"\nSelect provider (1-{len(providers)}) or enter custom name: ").strip()
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(providers):
+                    provider = providers[idx]
+                    break
+            else:
+                provider = choice.lower()
+                break
+        
+        if 'vpn' not in self.config:
+            self.config['vpn'] = {}
+        
+        self.config['vpn']['provider'] = provider
+        print(f"VPN provider set to: {provider}")
+        input("Press Enter to continue...")
+    
+    def configure_vpn_autoconnect(self):
+        """Configure VPN auto-connect setting"""
+        current = self.config.get('vpn', {}).get('auto_connect', False)
+        
+        print(f"Current auto-connect setting: {'Enabled' if current else 'Disabled'}")
+        enable = input("Enable auto-connect? [y/N]: ").strip().lower() in ['y', 'yes']
+        
+        if 'vpn' not in self.config:
+            self.config['vpn'] = {}
+        
+        self.config['vpn']['auto_connect'] = enable
+        print(f"Auto-connect {'enabled' if enable else 'disabled'}.")
+        input("Press Enter to continue...")
+    
+    def configure_vpn_torrent_requirements(self):
+        """Configure VPN requirements for torrent operations"""
+        current = self.config.get('vpn', {}).get('required_for_torrents', True)
+        
+        print(f"Current torrent requirement: {'Required' if current else 'Optional'}")
+        require = input("Require VPN for torrent operations? [Y/n]: ").strip().lower() not in ['n', 'no']
+        
+        if 'vpn' not in self.config:
+            self.config['vpn'] = {}
+        
+        self.config['vpn']['required_for_torrents'] = require
+        print(f"VPN {'required' if require else 'optional'} for torrents.")
+        input("Press Enter to continue...")
+    
+    def test_vpn_connection(self):
+        """Test VPN connection status"""
+        try:
+            from vpn_manager import VPNManager
+            
+            vpn_config = self.config.get('vpn', {})
+            if not vpn_config.get('enabled', False):
+                print("VPN is disabled in configuration.")
+                input("Press Enter to continue...")
+                return
+            
+            vpn = VPNManager(vpn_config)
+            status = vpn.get_status()
+            
+            print(f"\nVPN Status: {status}")
+            
+            if status == "connected":
+                try:
+                    import requests
+                    response = requests.get("https://ipinfo.io/json", timeout=10)
+                    data = response.json()
+                    print(f"Current IP: {data.get('ip', 'Unknown')}")
+                    print(f"Location: {data.get('city', 'Unknown')}, {data.get('country', 'Unknown')}")
+                    print(f"ISP: {data.get('org', 'Unknown')}")
+                except Exception as e:
+                    print(f"Could not get IP info: {e}")
+            
+        except ImportError:
+            print("VPN manager not available. Make sure vpn_manager.py is installed.")
+        except Exception as e:
+            print(f"VPN test failed: {e}")
         
         input("Press Enter to continue...")
 

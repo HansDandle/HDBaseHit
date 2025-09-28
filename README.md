@@ -7,8 +7,9 @@ A comprehensive TV recording solution for HDHomeRun network tuners with web inte
 - **Live TV Recording**: Record from HDHomeRun network tuners
 - **Web Interface**: Modern, responsive web UI for managing recordings
 - **Smart Scheduling**: Schedule recordings with recurring series support
-- **EPG Integration**: Electronic Program Guide support via Zap2it
-- **Torrent Integration**: Optional Prowlarr integration for content discovery
+- **EPG Integration**: Electronic Program Guide support via Zap2it (configurable by zip code)
+- **VPN Support**: Generic VPN integration (NordVPN, ExpressVPN, ProtonVPN, Surfshark, custom)
+- **Indexer Integration**: Support for multiple torrent/usenet indexers (Prowlarr, Jackett, Torznab)
 - **Multi-format Support**: Record in MP4 or TS formats
 - **Background Service**: Run as Windows service for always-on operation
 - **Mobile-Friendly**: Progressive Web App (PWA) support
@@ -124,18 +125,75 @@ The configuration file (`config.json`) contains the following sections:
 
 **Important**: Your zip code determines which TV stations and program schedules are available. The setup wizard will auto-detect your headend ID based on your zip code.
 
-#### Prowlarr Integration (Optional)
+#### VPN Settings (Optional)
 ```json
 {
-  "prowlarr": {
+  "vpn": {
     "enabled": false,
-    "api_url": "http://127.0.0.1:9696",
-    "api_key": "",
-    "timeout": 15,
-    "comment": "Prowlarr integration for torrent searching"
+    "provider": "nordvpn",
+    "auto_connect": false,
+    "required_for_torrents": true,
+    "disconnect_on_exit": false,
+    "connection_check_url": "https://ipinfo.io/json",
+    "comment": "VPN configuration for secure connections"
   }
 }
 ```
+
+**Supported VPN Providers**:
+- **nordvpn**: NordVPN (uses `nordvpn` CLI)
+- **expressvpn**: ExpressVPN (uses `expressvpn` CLI)  
+- **protonvpn**: ProtonVPN (uses `protonvpn-cli`)
+- **surfshark**: Surfshark (uses `surfshark` CLI)
+- **generic**: Custom provider (requires manual command configuration)
+
+**VPN Options**:
+- `enabled`: Enable/disable VPN integration
+- `provider`: Which VPN service to use
+- `auto_connect`: Automatically connect VPN when needed
+- `required_for_torrents`: Require VPN for torrent operations
+- `disconnect_on_exit`: Disconnect VPN when application exits
+
+#### Indexer Integration (Optional)
+```json
+{
+  "indexer": {
+    "enabled": false,
+    "provider": "prowlarr",
+    "timeout": 30,
+    "comment": "Torrent/Usenet indexer configuration",
+    "providers": {
+      "prowlarr": {
+        "api_url": "http://127.0.0.1:9696",
+        "api_key": "",
+        "name": "Prowlarr"
+      },
+      "jackett": {
+        "api_url": "http://127.0.0.1:9117",
+        "api_key": "",
+        "indexers": "all",
+        "name": "Jackett"
+      },
+      "torznab": {
+        "api_url": "",
+        "api_key": "",
+        "name": "Custom Torznab"
+      }
+    }
+  }
+}
+```
+
+**Supported Indexer Providers**:
+- **prowlarr**: Prowlarr indexer management (recommended)
+- **jackett**: Jackett torrent proxy
+- **torznab**: Custom Torznab-compatible indexer
+
+**Indexer Options**:
+- `enabled`: Enable/disable indexer integration
+- `provider`: Which indexer service to use
+- `timeout`: API request timeout in seconds
+- Provider-specific settings for API URL, key, etc.
 
 ## Usage
 
@@ -146,7 +204,7 @@ Once started, access the web interface at `http://localhost:5000` to:
 - **Browse Channels**: View available HDHomeRun channels
 - **Schedule Recordings**: Set up one-time or recurring recordings
 - **Manage Library**: Browse and organize recorded content
-- **Search Content**: Find shows using integrated EPG data
+- **Search Content**: Find shows using EPG data and optional indexer integration
 - **Monitor System**: View recording status and system health
 
 ### GUI Application

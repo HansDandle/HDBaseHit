@@ -317,83 +317,26 @@ import re
 # torrent workflows so user recordings remain untouched.
 TV_SHOWS_DIR = str(config.get_tv_shows_dir())
 MOVIES_DIR = str(config.get_movies_dir())
-# BiratePay integration defaults
+# Indexer integration defaults
 import os as _os
-BIRATEPAY_ENABLED = config.is_biratepay_enabled() and _os.getenv("BIRATEPAY_ENABLED", "0") not in ("0", "false", "False")
-BIRATEPAY_PORT = config.get('biratepay', 'port', 5055)
-BIRATEPAY_API_URL = f"http://127.0.0.1:{BIRATEPAY_PORT}"
-BIRATEPAY_AUTOSTART = _os.getenv("BIRATEPAY_AUTOSTART", "0") not in ("0", "false", "False")
-_BIRATEPAY_PROC = None
-def start_biratepay_if_needed():
-    """Launch the BiratePay API (torrent search helper) in the background if enabled.
-
-    Strategy: spawn a python subprocess running the local thebiratepay-master/app.py on the configured port.
-    We attempt a lightweight HTTP GET to detect if it's already up; if so we skip spawning.
-    """
-    global _BIRATEPAY_PROC
-    if not BIRATEPAY_ENABLED or not BIRATEPAY_AUTOSTART:
-        return
-    # Quick availability probe
+INDEXER_ENABLED = config.is_indexer_enabled()
+def check_indexer_availability():
+    """Check if indexer service is available"""
+    if not INDEXER_ENABLED:
+        return False
+        
     try:
-        import requests as _rq
-        resp = _rq.get(f"http://127.0.0.1:{BIRATEPAY_PORT}/", timeout=1)
-        if resp.status_code < 500:
-            print(f"BiratePay already running on port {BIRATEPAY_PORT}")
-            return
-    except Exception:
-        pass  # Not up yet
-    import subprocess as _sp, sys as _sys, os as _oslocal
-    biratepay_dir = _oslocal.path.join(_oslocal.path.dirname(__file__), 'thebiratepay-master')
-    app_path = _oslocal.path.join(biratepay_dir, 'app.py')
-    if not _oslocal.path.exists(app_path):
-        print("BiratePay autostart skipped: app.py not found")
-        return
-    env = {**_oslocal.environ, 'BIRATEPAY_PORT': str(BIRATEPAY_PORT), 'BASE_URL': _oslocal.environ.get('BASE_URL','https://thepiratebay.org/')}
-    try:
-        log_path = _oslocal.path.join(biratepay_dir, 'biratepay.log')
-        log_file = open(log_path, 'ab', buffering=0)
-        _BIRATEPAY_PROC = _sp.Popen([_sys.executable, app_path], cwd=biratepay_dir, env=env, stdout=log_file, stderr=log_file)
-        print(f"Started BiratePay subprocess pid={_BIRATEPAY_PROC.pid} on port {BIRATEPAY_PORT} (warming up) log={log_path}")
-        # Wait briefly for readiness (up to 5 seconds)
-        import time as _t
-        for _ in range(25):
-            if _BIRATEPAY_PROC.poll() is not None:
-                print("BiratePay subprocess exited early. Reviewing log tail:")
-                try:
-                    with open(log_path, 'rb') as lf:
-                        tail = lf.read().splitlines()[-40:]
-                        for line in tail:
-                            try:
-                                print('[biratepay]', line.decode(errors='ignore'))
-                            except Exception:
-                                pass
-                except Exception as _e:
-                    print(f"Could not read biratepay log: {_e}")
-                break
-            try:
-                resp = _rq.get(f"http://127.0.0.1:{BIRATEPAY_PORT}/", timeout=0.5)
-                if resp.status_code < 500:
-                    print("BiratePay ready.")
-                    break
-            except Exception:
-                pass
-            _t.sleep(0.2)
+        from indexer_manager import IndexerManager
+        indexer = IndexerManager()
+        return indexer.is_available()
     except Exception as e:
-        print(f"Failed to start BiratePay subprocess: {e}")
+        print(f"Indexer availability check failed: {e}")
+        return False
 
-def stop_biratepay():
-    global _BIRATEPAY_PROC
-    if _BIRATEPAY_PROC and _BIRATEPAY_PROC.poll() is None:
-        try:
-            _BIRATEPAY_PROC.terminate()
-        except Exception:
-            pass
-
-
-# Unified torrent search function that tries Prowlarr first, then BiratePay fallback
+# Unified torrent search function using configured indexer
 def unified_torrent_search(query: str, content_type: str = "tv", sort: str = None) -> tuple:
     """
-    Unified search function that tries Prowlarr first, falls back to BiratePay.
+    Unified search function using configured indexer provider.
     
     Args:
         query: Search term
@@ -403,56 +346,43 @@ def unified_torrent_search(query: str, content_type: str = "tv", sort: str = Non
     Returns:
         Tuple of (provider_name, list_of_torrents)
     """
-    print(f"🔍 Unified search for '{query}' (type: {content_type})")
+    print(f"🔍 Searching for '{query}' (type: {content_type})")
     
-    # Debug environment variables
-    print(f"DEBUG: PROWLARR_API_URL = {os.environ.get('PROWLARR_API_URL', 'NOT_SET')}")
-    print(f"DEBUG: PROWLARR_API_KEY = {os.environ.get('PROWLARR_API_KEY', 'NOT_SET')}")
+    if not INDEXER_ENABLED:
+        print("⚠️ Indexer integration is disabled")
+        return ("disabled", [])
     
-    # Try Prowlarr first
     try:
-        from prowlarr_client import search as prowlarr_search, test_connection, ProwlarrClientError
+        from indexer_manager import IndexerManager
         
-        if test_connection():
-            print("📡 Using Prowlarr for search")
-            results = prowlarr_search(query, content_type=content_type)
-            if results:
-                print(f"✅ Prowlarr returned {len(results)} results")
-                return ("prowlarr", results)
-            else:
-                print("⚠️ Prowlarr returned no results, trying BiratePay fallback")
-        else:
-            print("⚠️ Prowlarr connection failed, trying BiratePay fallback")
-            
-    except ImportError:
-        print("⚠️ Prowlarr client not available, using BiratePay fallback")
-    except ProwlarrClientError as e:
-        print(f"⚠️ Prowlarr error: {e}, trying BiratePay fallback")
+        indexer = IndexerManager()
+        provider = indexer.provider
+        
+        print(f"📡 Using {provider} indexer for search")
+        
+        # Map content type to category
+        category = None
+        if content_type == "tv":
+            category = "5000"  # TV category
+        elif content_type == "movie":
+            category = "2000"  # Movie category
+        
+        result = indexer.search(query, category=category, limit=50)
+        
+        if 'error' in result:
+            print(f"❌ Indexer search failed: {result['error']}")
+            return ("error", [])
+        
+        results = result.get('results', [])
+        print(f"✅ {provider} returned {len(results)} results")
+        return (provider, results)
+        
+    except ImportError as e:
+        print(f"❌ Indexer manager not available: {e}")
+        return ("error", [])
     except Exception as e:
-        print(f"⚠️ Unexpected Prowlarr error: {e}, trying BiratePay fallback")
-    
-    # Fallback to BiratePay
-    try:
-        if BIRATEPAY_ENABLED:
-            from biratepay_client import search as biratepay_search, BiratePayClientError
-            print("🏴‍☠️ Using BiratePay for search")
-            
-            # Convert sort parameter if needed
-            sort_param = sort if sort else 'seeds_desc'
-            
-            results = biratepay_search(query, page=0, sort=sort_param)
-            print(f"✅ BiratePay returned {len(results)} results")
-            return ("biratepay", results)
-        else:
-            print("⚠️ BiratePay disabled, no search results available")
-            
-    except ImportError:
-        print("⚠️ BiratePay client not available")
-    except Exception as e:
-        print(f"⚠️ BiratePay error: {e}")
-    
-    print("❌ All search methods failed")
-    return ("none", [])
+        print(f"❌ Indexer search failed: {e}")
+        return ("error", [])
 import threading
 import subprocess
 import time
@@ -1983,7 +1913,7 @@ def schedule_next_episode(show_name):
         return {"error": str(e)}
 
 def search_torrents_for_series(series_name, season_number):
-    """Search for all episodes in a TV series season using BiratePay progressive queries.
+    """Search for all episodes in a TV series season using configured indexer.
 
     Strategy:
       1. Perform a broad season-level search: "<Series> Sxx" to gather a large pool.
@@ -1993,19 +1923,19 @@ def search_torrents_for_series(series_name, season_number):
       4. Return a normalized list ready for UI consumption (similar shape to prior mock data):
          name (SxxEyy), title (human), size (human readable), seeders, magnet, selected default True.
 
-    Falls back gracefully if BiratePay client unavailable.
+    Falls back gracefully if indexer unavailable.
     """
     import re
     from math import log
     from datetime import datetime as _dt
 
-    # Use unified search (tries Prowlarr first, BiratePay fallback)
+    # Use unified search with configured indexer
 
     season_tag = f"S{season_number:02d}"
     clean_series = re.sub(r"[^\w\s]", " ", series_name).strip()
     base_query = f"{clean_series} {season_tag}".strip()
 
-    print(f"🔍 (BiratePay) Season search base query: '{base_query}'")
+    print(f"🔍 Season search base query: '{base_query}'")
 
     # Helper: human readable size from bytes (can accept int/float/None)
     def human_size(num_bytes):
@@ -2350,7 +2280,7 @@ def agent_download(parsed):
                 "message": "Provide a search phrase or magnet link.",
                 "example": "download the office season 2"
             }
-        # Attempt unified torrent search (Prowlarr + BiratePay fallback)
+        # Attempt torrent search using configured indexer
         if 'torrent_provider' not in parsed:  # simple guard to avoid recursion
             try:
                         # --- Progressive fallback query strategy ---
@@ -2437,7 +2367,7 @@ def agent_download(parsed):
         # Fallback guidance
         return {
             "status": "search_needed",
-            "message": f"BiratePay disabled or no provider results. To download '{query}', provide a magnet link/torrent URL or use 'download season X of [series name]'.",
+            "message": f"Indexer disabled or no search results. To download '{query}', provide a magnet link/torrent URL or use 'download season X of [series name]'.",
             "example": "download magnet:?xt=... OR download season 3 of abbott elementary"
         }
 
@@ -2591,165 +2521,86 @@ def auto_categorize_torrents():
         return 0
 
 def connect_vpn():
-    """Connect to ProtonVPN - launches app which auto-connects or triggers connection if running but disconnected"""
+    """Connect to configured VPN provider"""
     try:
-        print("🔐 Connecting to ProtonVPN...")
+        from config_manager import ConfigManager
+        from vpn_manager import VPNManager
+        
+        config_manager = ConfigManager()
+        vpn_config = config_manager.get_vpn_config()
+        if not vpn_config['enabled']:
+            print("❌ VPN is disabled in configuration")
+            return False
+            
+        vpn = VPNManager(vpn_config)
+        print(f"🔐 Connecting to {vpn_config['provider']} VPN...")
         
         # Check current status first
-        vpn_connected = check_vpn_status()
-        
-        if vpn_connected:
-            print("✅ ProtonVPN already running and connected")
+        status = vpn.get_status()
+        if status == "connected":
+            print(f"✅ {vpn_config['provider']} VPN already connected")
             return True
-            
-        # Check if ProtonVPN process exists but isn't connected
-        try:
-            result = subprocess.run(
-                ['tasklist'], 
-                capture_output=True, 
-                text=True, 
-                timeout=5
-            )
-            process_exists = ('ProtonVPN.Client.exe' in result.stdout or 
-                            'ProtonVPNService.exe' in result.stdout)
-        except:
-            process_exists = False
-            
-        if process_exists:
-            print("🔄 ProtonVPN is running but not connected - attempting to trigger connection...")
-            # ProtonVPN is running but not connected - this sometimes happens
-            # We can try launching it again (usually brings the GUI to foreground and may trigger auto-connect)
-        else:
-            print("🚀 Starting ProtonVPN (auto-connects on launch)...")
-            
-        # Launch/relaunch ProtonVPN 
-        subprocess.Popen(
-            [r'C:\Program Files\Proton\VPN\ProtonVPN.Launcher.exe']
-        )
         
-        # Wait for ProtonVPN to start and auto-connect (takes ~60 seconds)
-        print("Waiting for ProtonVPN to start and auto-connect (this takes about 60 seconds)...")
-        for i in range(75):  # Wait up to 75 seconds for full startup
-            time.sleep(1)
-            if check_vpn_status():  # ProtonVPN running = connected
-                print(f"✅ ProtonVPN connected successfully (took {i+1} seconds)")
-                return True
-            elif i == 10:
-                print("🔄 ProtonVPN initializing... (10s)")
-            elif i == 30:
-                print("🔄 Still initializing ProtonVPN... (30s)")
-            elif i == 45:
-                print("🔄 ProtonVPN still starting up... (45s)")
-            elif i == 60:
-                print("🔄 Almost ready, ProtonVPN takes time to connect... (60s)")
-        
-        # Final check after full wait
-        if check_vpn_status():
-            print("✅ ProtonVPN connected")
+        # Attempt connection
+        result = vpn.connect()
+        if result:
+            print(f"✅ Successfully connected to {vpn_config['provider']} VPN")
             return True
         else:
-            print("⚠️ ProtonVPN started but may need manual activation - check the system tray")
-            return "GUI_STARTED"
+            print(f"❌ Failed to connect to {vpn_config['provider']} VPN")
+            return False
             
     except Exception as e:
         print(f"❌ Error connecting to VPN: {e}")
         return False
 
 def disconnect_vpn():
-    """Disconnect from ProtonVPN (Windows GUI version)"""
+    """Disconnect from configured VPN provider"""
     try:
-        print("🔓 Disconnecting from ProtonVPN...")
+        from config_manager import ConfigManager
+        from vpn_manager import VPNManager
         
-        # Check if ProtonVPN is running
-        result = subprocess.run(
-            ['tasklist', '/FI', 'IMAGENAME eq ProtonVPN.exe'], 
-            capture_output=True, 
-            text=True, 
-            timeout=10
-        )
+        config_manager = ConfigManager()
+        vpn_config = config_manager.get_vpn_config()
+        if not vpn_config['enabled']:
+            print("❌ VPN is disabled in configuration")
+            return False
+            
+        vpn = VPNManager(vpn_config)
+        print(f"🔓 Disconnecting from {vpn_config['provider']} VPN...")
         
-        if 'ProtonVPN.exe' not in result.stdout:
-            print("✅ ProtonVPN not running (already disconnected)")
+        status = vpn.get_status()
+        if status == "disconnected":
+            print(f"✅ {vpn_config['provider']} VPN already disconnected")
             return True
         
-        # For now, request manual disconnect
-        # Future enhancement: could try to close the ProtonVPN process entirely
-        print("⚠️ Please disconnect manually via ProtonVPN GUI.")
-        print("   Or close ProtonVPN entirely to force disconnect.")
-        return "MANUAL_DISCONNECT_NEEDED"
+        result = vpn.disconnect()
+        if result:
+            print(f"✅ Successfully disconnected from {vpn_config['provider']} VPN")
+            return True
+        else:
+            print(f"❌ Failed to disconnect from {vpn_config['provider']} VPN")
+            return False
             
     except Exception as e:
-        print(f"⚠️ VPN disconnect error: {e}")
+        print(f"❌ Error disconnecting VPN: {e}")
         return False
 
 def check_vpn_status():
-    """Check if VPN is currently connected (Windows version) - checks both process and actual connection"""
+    """Check if VPN is currently connected using configured provider"""
     try:
-        # Method 1: Check if ProtonVPN process is running (check both GUI and service)
-        result = subprocess.run(
-            ['tasklist'], 
-            capture_output=True, 
-            text=True, 
-            timeout=10
-        )
+        from config_manager import ConfigManager
+        from vpn_manager import VPNManager
         
-        # Check for ProtonVPN GUI client or service processes
-        process_running = ('ProtonVPN.Client.exe' in result.stdout or 
-                          'ProtonVPNService.exe' in result.stdout)
-        
-        if not process_running:
-            print("🔍 ProtonVPN process not running")
+        config_manager = ConfigManager()
+        vpn_config = config_manager.get_vpn_config()
+        if not vpn_config['enabled']:
             return False
-        
-        # Method 2: Check if we have a VPN network adapter active
-        # This is more reliable than just checking process existence
-        try:
-            adapter_result = subprocess.run(
-                ['powershell', '-Command', 
-                 'Get-NetAdapter | Where-Object {$_.InterfaceDescription -like "*ProtonVPN*" -or $_.InterfaceDescription -like "*TAP*" -or $_.Name -like "*ProtonVPN*"} | Where-Object {$_.Status -eq "Up"}'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
             
-            vpn_adapter_active = adapter_result.stdout.strip() != ""
-            
-            if vpn_adapter_active:
-                print("✅ ProtonVPN process running and VPN adapter is active (connected)")
-                return True
-            else:
-                print("⚠️ ProtonVPN process running but no active VPN connection detected")
-                return False
-                
-        except Exception as adapter_error:
-            # Fallback: if adapter check fails, use IP-based method
-            print(f"Adapter check failed ({adapter_error}), trying IP method...")
-            
-            # Method 3: Check if our public IP suggests VPN usage
-            # This is a basic fallback - not foolproof but better than just process check
-            try:
-                import requests
-                response = requests.get('https://httpbin.org/ip', timeout=5)
-                if response.status_code == 200:
-                    ip_data = response.json()
-                    current_ip = ip_data.get('origin', '')
-                    
-                    # Very basic heuristic: ProtonVPN typically gives IPs that aren't residential
-                    # This isn't perfect but combined with process check gives us more confidence
-                    if process_running:
-                        print(f"🔍 ProtonVPN running, current IP: {current_ip}")
-                        # If we can reach the internet and process is running, assume connected
-                        return True
-                    
-            except Exception as ip_error:
-                print(f"IP check failed ({ip_error})")
-        
-        # Fallback: if all checks fail but process is running, assume connected
-        if process_running:
-            print("⚠️ ProtonVPN process detected but connection status unclear - assuming connected")
-            return True
-            
-        return False
+        vpn = VPNManager(vpn_config)
+        status = vpn.get_status()
+        return status == "connected"
+
             
     except Exception as e:
         print(f"Error checking VPN status: {e}")
@@ -3545,10 +3396,8 @@ if __name__=="__main__":
     else:
         print("Background EPG refresh loop: EPG auto-refresh DISABLED (set ENABLE_BACKGROUND_EPG_REFRESH=1 to enable)")
 
-    # Optionally autostart BiratePay torrent search helper
-    start_biratepay_if_needed()
-    import atexit as _atexit
-    _atexit.register(stop_biratepay)
+    # Check indexer availability on startup
+    check_indexer_availability()
 
     # Port configuration from config file
     web_config = config.get_web_config()

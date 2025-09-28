@@ -18,7 +18,7 @@ def print_banner():
     print("    TV Recorder for HDHomeRun - Interactive Setup")
     print("=" * 60)
     print()
-    print("⚠️  LEGAL NOTICE: This software is for legitimate, legal use only.")
+    print("LEGAL NOTICE: This software is for legitimate, legal use only.")
     print("   Only record content you are legally entitled to receive.")
     print("   Users are responsible for complying with copyright laws.")
     print()
@@ -236,29 +236,63 @@ def setup_ffmpeg():
         else:
             print("FFmpeg not found at that location. Please check the path.")
 
-def setup_prowlarr():
-    """Setup Prowlarr configuration"""
-    print("\n--- Prowlarr Configuration (Optional) ---")
-    print("Prowlarr integration allows searching for TV shows via torrents.")
+def setup_indexer():
+    """Setup indexer configuration (Prowlarr, Jackett, etc.)"""
+    print("\n--- Indexer Configuration (Optional) ---")
+    print("Indexer integration allows searching for TV shows via torrents/usenet.")
     
-    enable = input("Enable Prowlarr integration? [y/N]: ").strip().lower()
+    enable = input("Enable indexer integration? [y/N]: ").strip().lower()
     if enable not in ['y', 'yes']:
         return {"enabled": False}
     
-    api_url = get_user_input("Prowlarr API URL", "http://127.0.0.1:9696")
+    print("\nSupported indexer providers:")
+    providers = ["prowlarr", "jackett", "torznab (custom)"]
+    for i, provider in enumerate(providers, 1):
+        print(f"  {i}. {provider}")
     
-    print("\nTo get your Prowlarr API key:")
-    print("1. Open Prowlarr web interface")
-    print("2. Go to Settings > General")
-    print("3. Copy the API Key")
+    while True:
+        try:
+            choice = input(f"Select provider (1-{len(providers)}) or enter custom name: ").strip()
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(providers):
+                    provider = providers[idx].split(' ')[0]  # Remove description
+                    break
+            else:
+                provider = choice.lower()
+                break
+        except ValueError:
+            print("Please enter a valid choice")
     
-    api_key = input("Prowlarr API Key: ").strip()
+    # Get provider-specific configuration
+    if provider == 'prowlarr':
+        api_url = get_user_input("Prowlarr API URL", "http://127.0.0.1:9696")
+        print("\nTo get your Prowlarr API key:")
+        print("1. Open Prowlarr web interface")
+        print("2. Go to Settings > General")
+        print("3. Copy the API Key")
+    elif provider == 'jackett':
+        api_url = get_user_input("Jackett API URL", "http://127.0.0.1:9117")
+        print("\nTo get your Jackett API key:")
+        print("1. Open Jackett web interface")
+        print("2. Copy the API Key from the top right")
+    else:
+        api_url = input("Custom Torznab API URL: ").strip()
+        print("\nEnter your custom Torznab API configuration:")
+    
+    api_key = input("API Key: ").strip()
     
     return {
         "enabled": True,
-        "api_url": api_url,
-        "api_key": api_key,
-        "timeout": 15
+        "provider": provider,
+        "timeout": 30,
+        "providers": {
+            provider: {
+                "api_url": api_url,
+                "api_key": api_key,
+                "name": provider.title()
+            }
+        }
     }
 
 def setup_epg():
@@ -300,6 +334,46 @@ def setup_epg():
         "refresh_hours": [6, 14, 22]
     }
 
+def setup_vpn():
+    """Setup VPN configuration"""
+    print("\n--- VPN Configuration (Optional) ---")
+    print("VPN integration provides secure torrenting and protects your privacy.")
+    
+    enable_vpn = input("Enable VPN integration? [y/N]: ").strip().lower()
+    if enable_vpn not in ['y', 'yes']:
+        return {"enabled": False}
+    
+    print("\nSupported VPN providers:")
+    providers = ["nordvpn", "expressvpn", "protonvpn", "surfshark", "generic (custom)"]
+    for i, provider in enumerate(providers, 1):
+        print(f"  {i}. {provider}")
+    
+    while True:
+        try:
+            choice = input(f"Select provider (1-{len(providers)}) or enter custom name: ").strip()
+            if choice.isdigit():
+                idx = int(choice) - 1
+                if 0 <= idx < len(providers):
+                    provider = providers[idx].split(' ')[0]  # Remove description
+                    break
+            else:
+                provider = choice.lower()
+                break
+        except ValueError:
+            print("Please enter a valid choice")
+    
+    auto_connect = input("Auto-connect VPN when needed? [y/N]: ").strip().lower() in ['y', 'yes']
+    required_for_torrents = input("Require VPN for torrent operations? [Y/n]: ").strip().lower() not in ['n', 'no']
+    
+    return {
+        "enabled": True,
+        "provider": provider,
+        "auto_connect": auto_connect,
+        "required_for_torrents": required_for_torrents,
+        "disconnect_on_exit": False,
+        "connection_check_url": "https://ipinfo.io/json"
+    }
+
 def setup_web_interface():
     """Setup web interface configuration"""
     print("\n--- Web Interface Configuration ---")
@@ -326,7 +400,8 @@ def create_config():
     directories = setup_directories()
     ffmpeg_path = setup_ffmpeg()
     epg_config = setup_epg()
-    prowlarr_config = setup_prowlarr()
+    vpn_config = setup_vpn()
+    indexer_config = setup_indexer()
     web_config = setup_web_interface()
     
     # Create config structure
@@ -347,14 +422,13 @@ def create_config():
             **epg_config,
             "comment": "Electronic Program Guide settings for TV listings"
         },
-        "prowlarr": {
-            **prowlarr_config,
-            "comment": "Prowlarr integration settings for torrent searching"
+        "vpn": {
+            **vpn_config,
+            "comment": "VPN configuration for secure connections"
         },
-        "biratepay": {
-            "enabled": False,
-            "port": 5055,
-            "comment": "BiratePayment integration for premium content access"
+        "indexer": {
+            **indexer_config,
+            "comment": "Torrent/Usenet indexer integration"
         },
         "web_interface": {
             **web_config,
@@ -371,7 +445,7 @@ def create_config():
     print(f"FFmpeg path: {ffmpeg_path}")
     print(f"EPG zip code: {epg_config['zip_code']}")
     print(f"EPG auto-refresh: {epg_config['auto_refresh']}")
-    print(f"Prowlarr enabled: {prowlarr_config['enabled']}")
+    print(f"Indexer enabled: {indexer_config['enabled']}")
     print(f"Web interface: {web_config['host']}:{web_config['port']}")
     print()
     

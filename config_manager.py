@@ -56,7 +56,7 @@ class ConfigManager:
                 },
                 "ffmpeg": {"path": "ffmpeg"},
                 "prowlarr": {"enabled": False, "api_url": "http://127.0.0.1:9696", "api_key": "", "timeout": 15},
-                "biratepay": {"enabled": False, "port": 5055},
+                "indexer": {"enabled": False, "provider": "prowlarr"},
                 "web_interface": {"host": "0.0.0.0", "port": 5000, "debug": False}
             }
         
@@ -145,9 +145,45 @@ class ConfigManager:
             'timeout': self.get('prowlarr', 'timeout', 15)
         }
     
-    def is_biratepay_enabled(self):
-        """Check if BiratePayment integration is enabled"""
-        return self.get('biratepay', 'enabled', False)
+    def get_indexer_config(self):
+        """Get indexer configuration"""
+        indexer_config = self.get('indexer', default={})
+        return {
+            'enabled': indexer_config.get('enabled', False),
+            'provider': indexer_config.get('provider', 'prowlarr'),
+            'timeout': indexer_config.get('timeout', 30),
+            'providers': indexer_config.get('providers', {
+                'prowlarr': {
+                    'api_url': 'http://127.0.0.1:9696',
+                    'api_key': '',
+                    'name': 'Prowlarr'
+                },
+                'jackett': {
+                    'api_url': 'http://127.0.0.1:9117',
+                    'api_key': '',
+                    'indexers': 'all',
+                    'name': 'Jackett'
+                },
+                'torznab': {
+                    'api_url': '',
+                    'api_key': '',
+                    'name': 'Custom Torznab'
+                }
+            })
+        }
+    
+    def is_indexer_enabled(self):
+        """Check if indexer integration is enabled"""
+        return self.get('indexer', 'enabled', False)
+    
+    def get_indexer_provider_config(self, provider=None):
+        """Get configuration for specific indexer provider"""
+        indexer_config = self.get_indexer_config()
+        if not provider:
+            provider = indexer_config['provider']
+        
+        providers = indexer_config['providers']
+        return providers.get(provider, {})
     
     def get_web_config(self):
         """Get web interface configuration"""
@@ -166,6 +202,32 @@ class ConfigManager:
             'auto_refresh': self.get('epg', 'auto_refresh', False),
             'refresh_hours': self.get('epg', 'refresh_hours', [6, 14, 22])
         }
+    
+    def get_vpn_config(self):
+        """Get VPN configuration"""
+        vpn_config = self.get('vpn', default={})
+        return {
+            'enabled': vpn_config.get('enabled', False),
+            'provider': vpn_config.get('provider', 'generic'),
+            'auto_connect': vpn_config.get('auto_connect', False),
+            'required_for_torrents': vpn_config.get('required_for_torrents', True),
+            'disconnect_on_exit': vpn_config.get('disconnect_on_exit', False),
+            'connection_check_url': vpn_config.get('connection_check_url', 'https://ipinfo.io/json'),
+            'providers': vpn_config.get('providers', {})
+        }
+    
+    def is_vpn_enabled(self):
+        """Check if VPN integration is enabled"""
+        return self.get('vpn', 'enabled', False)
+    
+    def get_vpn_provider_config(self, provider=None):
+        """Get configuration for specific VPN provider"""
+        vpn_config = self.get_vpn_config()
+        if provider is None:
+            provider = vpn_config['provider']
+        
+        providers = vpn_config['providers']
+        return providers.get(provider, providers.get('generic', {}))
 
 # Global config instance
 config = None
