@@ -2,10 +2,70 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timedelta
 import pytz
+from config_manager import get_config
 
-def fetch_gracenote_epg(days=7):
-    """Fetch EPG data from Gracenote API for Austin area (78748) for multiple days"""
+def detect_headend_id(zip_code):
+    """Detect headend ID for a given zip code by querying Gracenote"""
     try:
+        # First, try to get lineup information for this zip code
+        lookup_url = "https://tvlistings.gracenote.com/api/lineups"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json',
+            'Referer': 'https://tvlistings.gracenote.com/'
+        }
+        
+        params = {
+            'country': 'USA',
+            'postalCode': zip_code
+        }
+        
+        response = requests.get(lookup_url, params=params, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Look for the primary headend ID (usually the first/default one)
+        if data and isinstance(data, list) and len(data) > 0:
+            # Try to find an over-the-air or cable headend
+            for lineup in data:
+                if isinstance(lineup, dict) and 'headendId' in lineup:
+                    headend_id = lineup['headendId']
+                    lineup_name = lineup.get('name', 'Unknown')
+                    print(f"Detected headend ID '{headend_id}' for zip {zip_code} ({lineup_name})")
+                    return headend_id
+        
+        print(f"Warning: Could not detect headend ID for zip code {zip_code}")
+        return ""
+        
+    except Exception as e:
+        print(f"Error detecting headend ID for zip {zip_code}: {e}")
+        return ""
+
+def fetch_gracenote_epg(days=7, zip_code=None, headend_id=None):
+    """Fetch EPG data from Gracenote API for specified location and multiple days"""
+    try:
+        # Get configuration
+        config = get_config()
+        epg_config = config.get_epg_config()
+        
+        # Use provided parameters or fall back to configuration
+        if zip_code is None:
+            zip_code = epg_config['zip_code']
+        if headend_id is None:
+            headend_id = epg_config['headend_id']
+            
+        # Auto-detect headend ID if not provided
+        if not headend_id:
+            print(f"Auto-detecting headend ID for zip code {zip_code}...")
+            headend_id = detect_headend_id(zip_code)
+            if headend_id:
+                # Save the detected headend ID to config for future use
+                config.set('epg', 'headend_id', headend_id)
+                config.save_config()
+                print(f"Saved headend ID '{headend_id}' to configuration")
+        
+        print(f"Fetching EPG data for zip code {zip_code}, headend ID: {headend_id}")
+        
         # Use the exact parameters from your working URL
         base_url = "https://tvlistings.gracenote.com/api/grid"
         headers = {
@@ -48,13 +108,13 @@ def fetch_gracenote_epg(days=7):
             target_date = datetime.fromtimestamp(timestamp)
             
             params = {
-                'lineupId': 'USA-lineupId-DEFAULT',
+                'lineupId': '',  # Leave empty for auto-detection
                 'timespan': '6',  # 6 hours coverage per fetch
-                'headendId': 'lineupId',
+                'headendId': headend_id or '',
                 'country': 'USA',
-                'timezone': '',  # Leave empty like your example
-                'device': '-',
-                'postalCode': '78748',  # Austin area - this is the key filter
+                'timezone': '',  # Leave empty for auto-detection
+                'device': 'X',
+                'postalCode': zip_code,
                 'isOverride': 'true',
                 'time': str(timestamp),  # Use calculated timestamps
                 'pref': '32,256',

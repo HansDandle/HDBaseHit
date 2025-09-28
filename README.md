@@ -108,6 +108,22 @@ The configuration file (`config.json`) contains the following sections:
 }
 ```
 
+#### EPG (Electronic Program Guide) Settings
+```json
+{
+  "epg": {
+    "zip_code": "78748",
+    "headend_id": "",
+    "timezone": "America/Chicago",
+    "auto_refresh": false,
+    "refresh_hours": [6, 14, 22],
+    "comment": "TV listings configuration. zip_code determines your TV market area."
+  }
+}
+```
+
+**Important**: Your zip code determines which TV stations and program schedules are available. The setup wizard will auto-detect your headend ID based on your zip code.
+
 #### Prowlarr Integration (Optional)
 ```json
 {

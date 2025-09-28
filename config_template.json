@@ -30,5 +30,13 @@
     "port": 5000,
     "debug": false,
     "comment": "Web interface settings"
+  },
+  "epg": {
+    "zip_code": "78748",
+    "headend_id": "",
+    "timezone": "America/Chicago",
+    "auto_refresh": false,
+    "refresh_hours": [6, 14, 22],
+    "comment": "Electronic Program Guide settings. zip_code determines your TV market. Leave headend_id empty for auto-detection."
   }
 }

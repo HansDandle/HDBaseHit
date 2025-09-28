@@ -156,6 +156,16 @@ class ConfigManager:
             'port': self.get('web_interface', 'port', 5000),
             'debug': self.get('web_interface', 'debug', False)
         }
+    
+    def get_epg_config(self):
+        """Get EPG configuration"""
+        return {
+            'zip_code': self.get('epg', 'zip_code', '78748'),
+            'headend_id': self.get('epg', 'headend_id', ''),
+            'timezone': self.get('epg', 'timezone', 'America/Chicago'),
+            'auto_refresh': self.get('epg', 'auto_refresh', False),
+            'refresh_hours': self.get('epg', 'refresh_hours', [6, 14, 22])
+        }
 
 # Global config instance
 config = None

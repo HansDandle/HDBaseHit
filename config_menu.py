@@ -24,14 +24,15 @@ class ConfigMenu:
             print("1. HDHomeRun Settings")
             print("2. Directory Settings") 
             print("3. FFmpeg Settings")
-            print("4. Prowlarr Integration")
-            print("5. Web Interface Settings")
-            print("6. View Current Configuration")
-            print("7. Save & Exit")
-            print("8. Exit Without Saving")
+            print("4. EPG (TV Listings) Settings")
+            print("5. Prowlarr Integration")
+            print("6. Web Interface Settings")
+            print("7. View Current Configuration")
+            print("8. Save & Exit")
+            print("9. Exit Without Saving")
             print()
             
-            choice = input("Select option (1-8): ").strip()
+            choice = input("Select option (1-9): ").strip()
             
             if choice == '1':
                 self.hdhr_menu()
@@ -40,15 +41,17 @@ class ConfigMenu:
             elif choice == '3':
                 self.ffmpeg_menu()
             elif choice == '4':
-                self.prowlarr_menu()
+                self.epg_menu()
             elif choice == '5':
-                self.web_interface_menu()
+                self.prowlarr_menu()
             elif choice == '6':
-                self.view_config()
+                self.web_interface_menu()
             elif choice == '7':
+                self.view_config()
+            elif choice == '8':
                 self.save_and_exit()
                 break
-            elif choice == '8':
+            elif choice == '9':
                 print("Exiting without saving...")
                 break
             else:
@@ -152,6 +155,58 @@ class ConfigMenu:
             elif choice == '3':
                 self.find_ffmpeg()
             elif choice == '4':
+                break
+            else:
+                input("Invalid choice. Press Enter to continue...")
+    
+    def epg_menu(self):
+        """EPG configuration menu"""
+        while True:
+            self.clear_screen()
+            print("=" * 50)
+            print("    EPG (TV Listings) Settings")
+            print("=" * 50)
+            print()
+            epg_config = self.config.get_epg_config()
+            
+            print(f"Zip Code: {epg_config['zip_code']}")
+            print(f"Headend ID: {epg_config['headend_id'] or 'Auto-detect'}")
+            print(f"Auto Refresh: {'Yes' if epg_config['auto_refresh'] else 'No'}")
+            print()
+            print("1. Change Zip Code")
+            print("2. Change Headend ID")
+            print("3. Toggle Auto Refresh")
+            print("4. Test EPG Connection")
+            print("5. Auto-detect Headend ID")
+            print("6. Back to Main Menu")
+            print()
+            
+            choice = input("Select option (1-6): ").strip()
+            
+            if choice == '1':
+                new_zip = input(f"Enter zip code [{epg_config['zip_code']}]: ").strip()
+                if new_zip:
+                    self.config.set('epg', 'zip_code', new_zip)
+                    # Clear headend ID to force re-detection
+                    self.config.set('epg', 'headend_id', '')
+                    print(f"Zip code updated to: {new_zip}")
+                    print("Headend ID cleared for auto-detection")
+                    input("Press Enter to continue...")
+            elif choice == '2':
+                new_headend = input(f"Enter headend ID [{epg_config['headend_id']}]: ").strip()
+                self.config.set('epg', 'headend_id', new_headend)
+                print(f"Headend ID updated to: {new_headend or 'Auto-detect'}")
+                input("Press Enter to continue...")
+            elif choice == '3':
+                new_auto = not epg_config['auto_refresh']
+                self.config.set('epg', 'auto_refresh', new_auto)
+                print(f"Auto refresh {'enabled' if new_auto else 'disabled'}")
+                input("Press Enter to continue...")
+            elif choice == '4':
+                self.test_epg()
+            elif choice == '5':
+                self.auto_detect_headend()
+            elif choice == '6':
                 break
             else:
                 input("Invalid choice. Press Enter to continue...")
@@ -456,6 +511,65 @@ class ConfigMenu:
                 print(f"✗ Connection failed: HTTP {response.status_code}")
         except requests.RequestException as e:
             print(f"✗ Connection failed: {e}")
+        
+        input("Press Enter to continue...")
+    
+    def test_epg(self):
+        """Test EPG connection"""
+        epg_config = self.config.get_epg_config()
+        zip_code = epg_config['zip_code']
+        
+        print(f"Testing EPG connection for zip code {zip_code}...")
+        
+        try:
+            from epg_zap2it import fetch_gracenote_epg
+            print("Fetching sample EPG data...")
+            
+            # Test with a small data fetch (1 day)
+            results = fetch_gracenote_epg(days=1, zip_code=zip_code)
+            
+            if results and len(results) > 0:
+                print(f"✓ EPG connection successful!")
+                print(f"Retrieved {len(results)} program entries")
+                
+                # Show a few sample entries
+                print("\\nSample listings:")
+                for i, entry in enumerate(results[:3]):
+                    show_title = entry.get('title', 'Unknown')
+                    channel = entry.get('channel', 'Unknown')
+                    print(f"  {channel}: {show_title}")
+            else:
+                print("✗ No EPG data retrieved")
+                
+        except Exception as e:
+            print(f"✗ EPG test failed: {e}")
+        
+        input("Press Enter to continue...")
+    
+    def auto_detect_headend(self):
+        """Auto-detect headend ID for current zip code"""
+        epg_config = self.config.get_epg_config()
+        zip_code = epg_config['zip_code']
+        
+        print(f"Auto-detecting headend ID for zip code {zip_code}...")
+        
+        try:
+            from epg_zap2it import detect_headend_id
+            headend_id = detect_headend_id(zip_code)
+            
+            if headend_id:
+                print(f"✓ Detected headend ID: {headend_id}")
+                save_it = input("Save this headend ID? [Y/n]: ").strip().lower()
+                if save_it in ['', 'y', 'yes']:
+                    self.config.set('epg', 'headend_id', headend_id)
+                    print("Headend ID saved to configuration")
+                else:
+                    print("Headend ID not saved")
+            else:
+                print("✗ Could not detect headend ID")
+                
+        except Exception as e:
+            print(f"✗ Auto-detection failed: {e}")
         
         input("Press Enter to continue...")
 

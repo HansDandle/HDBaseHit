@@ -257,6 +257,45 @@ def setup_prowlarr():
         "timeout": 15
     }
 
+def setup_epg():
+    """Setup Electronic Program Guide configuration"""
+    print("\n--- Electronic Program Guide (EPG) Configuration ---")
+    print("EPG provides TV show listings and scheduling information.")
+    print("Your zip code determines which TV stations and schedules are available.")
+    
+    zip_code = input("Enter your zip code [78748]: ").strip()
+    if not zip_code:
+        zip_code = "78748"
+    
+    # Test zip code detection
+    print(f"\nTesting EPG service for zip code {zip_code}...")
+    try:
+        from epg_zap2it import detect_headend_id
+        headend_id = detect_headend_id(zip_code)
+        if headend_id:
+            print(f"✓ Successfully detected your TV market!")
+            save_headend = input("Save this configuration? [Y/n]: ").strip().lower()
+            if save_headend in ['', 'y', 'yes']:
+                headend_id_final = headend_id
+            else:
+                headend_id_final = ""
+        else:
+            print("⚠ Could not auto-detect your TV market.")
+            headend_id_final = input("Enter headend ID manually (or leave empty): ").strip()
+    except Exception as e:
+        print(f"⚠ EPG test failed: {e}")
+        headend_id_final = ""
+    
+    auto_refresh = input("Enable automatic EPG refresh? [y/N]: ").strip().lower()
+    
+    return {
+        "zip_code": zip_code,
+        "headend_id": headend_id_final,
+        "timezone": "America/Chicago",  # Could be auto-detected later
+        "auto_refresh": auto_refresh in ['y', 'yes'],
+        "refresh_hours": [6, 14, 22]
+    }
+
 def setup_web_interface():
     """Setup web interface configuration"""
     print("\n--- Web Interface Configuration ---")
@@ -282,6 +321,7 @@ def create_config():
     hdhr_ip = setup_hdhr()
     directories = setup_directories()
     ffmpeg_path = setup_ffmpeg()
+    epg_config = setup_epg()
     prowlarr_config = setup_prowlarr()
     web_config = setup_web_interface()
     
@@ -298,6 +338,10 @@ def create_config():
         "ffmpeg": {
             "path": ffmpeg_path,
             "comment": "Path to ffmpeg executable"
+        },
+        "epg": {
+            **epg_config,
+            "comment": "Electronic Program Guide settings for TV listings"
         },
         "prowlarr": {
             **prowlarr_config,
@@ -321,6 +365,8 @@ def create_config():
     print(f"HDHomeRun IP: {hdhr_ip}")
     print(f"Recordings directory: {directories['recordings']}")
     print(f"FFmpeg path: {ffmpeg_path}")
+    print(f"EPG zip code: {epg_config['zip_code']}")
+    print(f"EPG auto-refresh: {epg_config['auto_refresh']}")
     print(f"Prowlarr enabled: {prowlarr_config['enabled']}")
     print(f"Web interface: {web_config['host']}:{web_config['port']}")
     print()
