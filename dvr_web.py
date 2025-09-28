@@ -576,7 +576,7 @@ def get_hdhr_channels(ip):
         return channels_dict
     except Exception as e:
         print(f"Error fetching channel lineup: {e}")
-        return {"7.1": "Fox"}  # fallback
+        return {}  # No channels available
 
 channels = get_hdhr_channels(HDHR_IP)
 days_list = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
@@ -2956,6 +2956,20 @@ def open_recordings_folder():
         return jsonify({'status':'ok','opened': path})
     except Exception as e:
         return jsonify({'status':'error','error': str(e)}), 500
+
+@app.route('/run_setup', methods=['POST','GET'])
+def run_setup():
+    """Run the LineDrive setup wizard."""
+    try:
+        import subprocess
+        import sys
+        # Run setup.py in a new process
+        result = subprocess.Popen([sys.executable, 'setup.py'], 
+                                cwd=os.path.dirname(os.path.abspath(__file__)),
+                                creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == 'nt' else 0)
+        return jsonify({'status': 'ok', 'message': 'Setup wizard launched in new window', 'pid': result.pid})
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 500
 
 @app.route('/debug/refresh_epg', methods=['POST','GET'])
 def refresh_epg_manual():

@@ -1,10 +1,9 @@
-// TV Home Media Automation PWA JS
+// LineDrive TV Recording PWA JavaScript
 const form = document.getElementById('nlpForm');
 const input = document.getElementById('commandInput');
 const resultDiv = document.getElementById('result');
 const torrentResultsDiv = document.getElementById('torrentResults');
 const micBtn = document.getElementById('micBtn');
-const wolBtn = document.getElementById('wolBtn');
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -469,23 +468,6 @@ async function bulkAddSelectedTorrents() {
     resultDiv.textContent = 'Bulk add error: ' + e;
   }
 }
-
-wolBtn.addEventListener('click', async () => {
-  const mac = prompt('Enter MAC address to wake (format: 00:11:22:33:44:55):');
-  if (!mac) return;
-  resultDiv.textContent = 'Sending WOL...';
-  try {
-    const res = await fetch('/wol', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mac })
-    });
-    const data = await res.json();
-    resultDiv.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    resultDiv.textContent = 'Error: ' + err;
-  }
-});
 
 // Manual recording functions
 function startRecording() {

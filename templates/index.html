@@ -15,21 +15,8 @@
             <img src="/static/LineDrive Logo.jpg" alt="LineDrive Logo" style="max-height: 80px; max-width: 200px; width: auto; height: auto; margin-bottom: 0.5rem;">
             <h1 style="margin: 0.5rem 0;">📺 LineDrive TV Recording</h1>
         </div>
-        <div class="legal-notice" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em;">
+        <div class="legal-notice" style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); backdrop-filter: blur(10px); padding: 12px 16px; margin: 15px 0; border-radius: 12px; font-size: 0.9em; color: #ffc107;">
             ⚠️ <strong>Legal Use Only:</strong> This software is for legitimate, legal recording of over-the-air content you are entitled to receive. Users are responsible for complying with copyright laws.
-        </div>
-        <div style="margin: .25rem 0 1rem;">
-            <a href="/recent_recordings" target="_blank" style="font-size:.95rem; text-decoration:none;">
-                📄 View Recent Recordings (JSON)
-            </a>
-            <span style="margin:0 .5rem; color:#888;">•</span>
-            <a href="/recurring_status" target="_blank" style="font-size:.95rem; text-decoration:none;">
-                🔁 Recurring Status
-            </a>
-            <span style="margin:0 .5rem; color:#888;">•</span>
-            <button type="button" id="openFolderBtn" style="font-size:.95rem;">📂 Open Recordings Folder</button>
-            <span style="margin:0 .5rem; color:#888;">•</span>
-            <button type="button" id="autoCategorizeBtn" style="font-size:.95rem;">📋 Auto-Categorize Torrents</button>
         </div>
         <!-- PWA/NLP Controls -->
         <form id="nlpForm">
@@ -37,7 +24,6 @@
             <button type="submit">Send</button>
             <button type="button" id="micBtn" title="Speak"><span role="img" aria-label="mic">🎤</span></button>
         </form>
-        <button id="wolBtn">Wake PC</button>
         <div id="result"></div>
     <div id="torrentResults" class="torrent-results" style="margin-top:1.5rem;"></div>
 
@@ -350,6 +336,20 @@ async function cancelSeries(seriesName) {
 }
 </script>
 <script>
+document.getElementById('setupBtn')?.addEventListener('click', async () => {
+    try {
+        const res = await fetch('/run_setup', { method: 'POST' });
+        const j = await res.json();
+        if (j.status === 'ok') {
+            document.getElementById('result').innerText = `✅ ${j.message}`;
+        } else {
+            document.getElementById('result').innerText = `❌ Failed to launch setup: ${j.error || 'unknown error'}`;
+        }
+    } catch (e) {
+        document.getElementById('result').innerText = `❌ Failed to launch setup: ${e}`;
+    }
+});
+
 document.getElementById('openFolderBtn')?.addEventListener('click', async () => {
     try {
         const res = await fetch('/open_recordings_folder', { method: 'POST' });
@@ -365,7 +365,23 @@ document.getElementById('openFolderBtn')?.addEventListener('click', async () => 
 });
 </script>
 
-<footer style="margin-top: 2rem; padding: 1rem; text-align: center; border-top: 1px solid #444; font-size: 0.8em; color: #888;">
+<!-- Utility Links -->
+<div class="utility-links" style="margin: 2rem auto; max-width: 420px; padding: 1.5rem; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; text-align: center;">
+    <h3 style="margin: 0 0 1rem 0; font-size: 0.9rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px;">Quick Access</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; align-items: center;">
+        <button type="button" id="setupBtn" style="font-size: 0.85rem; color: #4caf50; padding: 0.5rem 0.75rem; background: rgba(76, 175, 80, 0.1); border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">⚙️ Settings</button>
+        <a href="/recent_recordings" target="_blank" style="font-size: 0.85rem; text-decoration: none; color: #4fc3f7; padding: 0.5rem 0.75rem; background: rgba(79, 195, 247, 0.1); border-radius: 8px; transition: all 0.3s ease;">
+            📄 Recent Recordings
+        </a>
+        <a href="/recurring_status" target="_blank" style="font-size: 0.85rem; text-decoration: none; color: #4fc3f7; padding: 0.5rem 0.75rem; background: rgba(79, 195, 247, 0.1); border-radius: 8px; transition: all 0.3s ease;">
+            🔁 Recurring Status
+        </a>
+        <button type="button" id="openFolderBtn" style="font-size: 0.85rem; color: #4fc3f7; padding: 0.5rem 0.75rem; background: rgba(79, 195, 247, 0.1); border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">📂 Open Folder</button>
+        <button type="button" id="autoCategorizeBtn" style="font-size: 0.85rem; color: #4fc3f7; padding: 0.5rem 0.75rem; background: rgba(79, 195, 247, 0.1); border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s ease;">📋 Auto-Categorize</button>
+    </div>
+</div>
+
+<footer style="margin-top: 2rem; padding: 1rem; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.8em; color: #888;">
     <p><strong>LineDrive</strong> is an independent open-source project. Not affiliated with Silicondust USA Inc.</p>
     <p>HDHomeRun is a registered trademark of Silicondust USA Inc.</p>
 </footer>

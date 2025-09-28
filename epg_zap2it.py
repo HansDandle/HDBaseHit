@@ -479,8 +479,8 @@ def parse_gracenote_data(data, target_date):
     """Parse Gracenote API response data for a specific date"""
     results = []
     
-    # Parse the JSON response - filter for ONLY Austin channels
-    austin_channels = ['7.1', '18.1', '24.1', '36.1', '42.1']  # Only these channels
+    # Parse the JSON response - use all available channels
+    # Note: Channel filtering should be done based on user's actual HDHomeRun lineup
     
     if 'channels' in data:
         for channel in data['channels']:
@@ -490,20 +490,18 @@ def parse_gracenote_data(data, target_date):
             channel_no = channel.get('channelNo', channel.get('number', 'N/A'))
             channel_name = channel.get('name', call_sign or 'Unknown')
             
-            # ONLY process if it's one of the Austin channels we want
-            if channel_no not in austin_channels:
-                continue
+            # Process all channels (no filtering by specific market)
             
-            # Create better channel display name for Austin channels
+            # Create channel display name
             if call_sign and affiliate_name and affiliate_name.upper() != 'NULL':
                 channel_display = f"{call_sign} {affiliate_name} ({channel_no})"
             elif call_sign:
                 channel_display = f"{call_sign} ({channel_no})"
             else:
-                channel_display = f"Austin TV ({channel_no})"
+                channel_display = f"Channel {channel_no}"
             
             if 'events' in channel:
-                for event in channel['events']:  # Get all events for Austin channels
+                for event in channel['events']:  # Get all events for this channel
                     program = event.get('program', {})
                     title = program.get('title', 'Unknown')
                     
@@ -558,7 +556,7 @@ def parse_gracenote_data(data, target_date):
                                 else:
                                     dt_utc = datetime.fromisoformat(start_time)
                                 
-                                # Convert to Central Time (Austin timezone)
+                                # Convert to Central Time
                                 central_tz = pytz.timezone('America/Chicago')
                                 if dt_utc.tzinfo is None:
                                     # Assume UTC if no timezone info
@@ -623,7 +621,7 @@ def parse_gracenote_data(data, target_date):
                         'time': time_str,
                         'date': date_str,
                         'period': period,
-                        'is_local': True,  # All are Austin local channels
+                        'is_local': True,  # Local channels
                         'call_sign': call_sign,
                         'channel_number': channel_no,
                         # Enhanced metadata

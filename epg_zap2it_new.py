@@ -30,7 +30,7 @@ def fetch_gracenote_epg(days=7):
                 'country': 'USA',
                 'timezone': '',  # Leave empty like your example
                 'device': '-',
-                'postalCode': '78748',  # Austin area - this is the key filter
+                'postalCode': '90210',  # Default postal code - should be configurable
                 'isOverride': 'true',
                 'time': str(timestamp),  # Use current day's timestamp
                 'pref': '32,256',
@@ -54,7 +54,7 @@ def fetch_gracenote_epg(days=7):
                 print(f"  Error fetching day {day_offset + 1}: {e}")
                 continue
         
-        print(f"Gracenote API (Austin channels 7.1, 18.1, 24.1, 36.1, 42.1): Found {len(all_results)} programs across {days} days")
+        print(f"Gracenote API: Found {len(all_results)} programs across {days} days")
         return all_results
         
     except Exception as e:
@@ -68,7 +68,7 @@ def parse_gracenote_data(data, target_date):
     results = []
     
     # Parse the JSON response - filter for ONLY Austin channels
-    austin_channels = ['7.1', '18.1', '24.1', '36.1', '42.1']  # Only these channels
+    # Use channels from user's HDHomeRun device instead of hardcoded list
     
     if 'channels' in data:
         for channel in data['channels']:
@@ -78,9 +78,7 @@ def parse_gracenote_data(data, target_date):
             channel_no = channel.get('channelNo', channel.get('number', 'N/A'))
             channel_name = channel.get('name', call_sign or 'Unknown')
             
-            # ONLY process if it's one of the Austin channels we want
-            if channel_no not in austin_channels:
-                continue
+            # Process all channels (no filtering by specific market)
             
             # Create better channel display name for Austin channels
             if call_sign and affiliate_name and affiliate_name.upper() != 'NULL':
@@ -229,26 +227,26 @@ def parse_gracenote_data(data, target_date):
     return results
 
 def get_fallback_epg_data():
-    """Fallback EPG data with ONLY Austin channels"""
-    print("Using fallback EPG data for Austin channels only")
+    """Fallback EPG data - generic sample"""
+    print("Using generic fallback EPG data")
     return [
         {
-            'channel': 'KTBC FOX (7.1)',
-            'title': 'Name That Tune',
+            'channel': 'Sample Channel (1.1)',
+            'title': 'Sample Program',
             'time': '7:00 PM',
             'date': datetime.now().strftime('%Y-%m-%d'),
             'period': 'Evening',
             'is_local': True,
-            'call_sign': 'KTBC',
-            'channel_number': '7.1',
+            'call_sign': 'SAMPLE',
+            'channel_number': '1.1',
             'episode_title': '',
             'season_number': '',
             'episode_number': '',
             'episode_id': '',
             'original_air_date': '',
-            'description': 'Music-based game show where contestants identify songs.',
-            'genre': 'Game Show',
-            'rating': 'TV-PG',
+            'description': 'Sample program description.',
+            'genre': 'General',
+            'rating': 'TV-G',
             'year': '2025',
             'duration': '60'
         },

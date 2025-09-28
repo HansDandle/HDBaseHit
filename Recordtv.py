@@ -267,7 +267,7 @@ frame.grid()
 
 channels = get_hdhr_channels(HDHR_IP)
 if not channels:
-    channels = {"7.1": "Fox"}  # fallback
+    channels = {}  # No channels found
 
 ttk.Label(frame, text="Channel:").grid(row=0, column=0)
 channel_var = tk.StringVar()
