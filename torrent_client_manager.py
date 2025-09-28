@@ -103,9 +103,16 @@ class TorrentClientManager:
         return False
 
     def add_torrent(self, magnet_link, category=None, save_path=None):
-        """Add a torrent to the client"""
+        """Add a torrent to the client (only accepts magnet links)"""
         if not self.authenticated and not self.authenticate():
             return {'success': False, 'error': 'Authentication failed'}
+        
+        # Validate that we have a proper magnet link
+        if not magnet_link or not isinstance(magnet_link, str):
+            return {'success': False, 'error': 'No magnet link provided'}
+        
+        if not magnet_link.startswith('magnet:'):
+            return {'success': False, 'error': f'Invalid magnet link format: {magnet_link[:100]}...' if len(magnet_link) > 100 else f'Invalid magnet link format: {magnet_link}'}
 
         try:
             if self.client_type == 'qbittorrent':

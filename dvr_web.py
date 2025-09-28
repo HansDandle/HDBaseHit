@@ -2207,32 +2207,55 @@ def agent_download(parsed):
             if 0 <= idx < len(torrents):
                 chosen = torrents[idx]
                 
-                # Try multiple fields for magnet link
+                # Try to find actual magnet link (not download URLs)
                 magnet = (
                     chosen.get('magnet') or 
                     chosen.get('magnet_url') or 
-                    chosen.get('magnetUrl') or 
+                    chosen.get('magnetUrl') or
+                    ''
+                )
+                
+                # Check if we have a download URL but no magnet
+                download_url = (
                     chosen.get('download_url') or
                     chosen.get('downloadUrl') or
                     ''
                 )
                 
+                if not magnet and download_url:
+                    print(f"🔍 No direct magnet link found, trying to resolve download URL...")
+                    # Try to resolve the download URL to get magnet link
+                    try:
+                        from indexer_manager import IndexerManager
+                        indexer = IndexerManager()
+                        resolved_magnet = indexer.resolve_download_url(download_url)
+                        if resolved_magnet and resolved_magnet.startswith('magnet:'):
+                            magnet = resolved_magnet
+                            print(f"✅ Resolved magnet link from download URL")
+                    except Exception as e:
+                        print(f"❌ Error resolving download URL: {e}")
+                
                 if not magnet:
                     print(f"❌ No magnet link found for torrent {idx+1}")
                     print(f"📋 Available fields: {list(chosen.keys())}")
                     print(f"📊 Torrent data: {chosen}")
-                    return {"error": "Selected entry has no magnet link"}
+                    
+                    if download_url:
+                        return {"error": "Could not resolve download URL to magnet link. This indexer may not provide magnet links for this result."}
+                    else:
+                        return {"error": "Selected entry has no magnet link"}
                 
                 if not magnet.startswith('magnet:'):
                     print(f"❌ Invalid magnet link format: {magnet}")
-                    return {"error": "Invalid magnet link format"}
+                    return {"error": f"Invalid magnet link format. Expected magnet: URI but got: {magnet[:100]}..."}
                 
                 # Use torrent client manager to add torrent
                 try:
                     from torrent_client_manager import TorrentClientManager
                     from config_manager import get_config
                     
-                    config = get_config()
+                    config_manager = get_config()
+                    config = config_manager.config  # Get the actual config dictionary
                     torrent_client = TorrentClientManager(config)
                     
                     # Determine category and save path
@@ -2391,17 +2414,19 @@ def agent_download(parsed):
                                 t_copy = dict(t)
                                 t_copy['option'] = i
                                 
-                                # Normalize magnet field - ensure 'magnet' field exists
+                                # Normalize magnet field - only use actual magnet links
                                 if 'magnet' not in t_copy or not t_copy['magnet']:
-                                    # Try to get magnet from other fields
+                                    # Try to get magnet from other fields (only magnet URLs)
                                     magnet_link = (
                                         t_copy.get('magnet_url') or 
                                         t_copy.get('magnetUrl') or 
-                                        t_copy.get('download_url') or 
-                                        t_copy.get('downloadUrl') or 
                                         ''
                                     )
-                                    t_copy['magnet'] = magnet_link
+                                    # Only set if it's actually a magnet link
+                                    if magnet_link and magnet_link.startswith('magnet:'):
+                                        t_copy['magnet'] = magnet_link
+                                    else:
+                                        t_copy['magnet'] = ''
                                 enriched.append(t_copy)
                             return {
                                 "status": "search_results",

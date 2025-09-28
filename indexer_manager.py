@@ -134,39 +134,60 @@ class IndexerManager:
         results = []
         
         for item in data[:limit]:
-            # Extract magnet link from multiple possible fields
+            # Extract download information from multiple possible fields
             magnet_link = (
                 item.get('magnetUrl') or 
                 item.get('magnet') or 
+                ''
+            )
+            
+            # Also get download URL (may be torrent file instead of magnet)
+            download_url = (
                 item.get('downloadUrl') or 
                 item.get('link') or 
                 item.get('guid') or 
                 ''
             )
             
-            # Ensure it's a proper magnet link
-            if magnet_link and not magnet_link.startswith('magnet:'):
-                # Some indexers return download URLs that need to be converted
-                if 'magnet:' in magnet_link:
-                    # Extract magnet part if it's embedded in a longer URL
-                    import re
-                    magnet_match = re.search(r'magnet:[^&\s"\']+', magnet_link)
-                    if magnet_match:
-                        magnet_link = magnet_match.group(0)
+            # Process magnet link if found - ensure it's valid
+            if magnet_link:
+                if not magnet_link.startswith('magnet:'):
+                    # Some indexers return URLs with embedded magnet links
+                    if 'magnet:' in magnet_link:
+                        # Extract magnet part if it's embedded in a longer URL
+                        import re
+                        magnet_match = re.search(r'magnet:[^&\s"\']+', magnet_link)
+                        if magnet_match:
+                            magnet_link = magnet_match.group(0)
+                        else:
+                            # Not a valid magnet link, clear it
+                            magnet_link = ''
+                    else:
+                        # Not a magnet link at all, clear it
+                        magnet_link = ''
+            
+            # Also check if download_url contains an embedded magnet (some indexers do this)
+            if not magnet_link and download_url and 'magnet:' in download_url:
+                import re
+                magnet_match = re.search(r'magnet:[^&\s"\']+', download_url)
+                if magnet_match:
+                    magnet_link = magnet_match.group(0)
             
             result = {
                 'title': item.get('title', ''),
                 'size': item.get('size', 0),
                 'seeders': item.get('seeders', 0),
                 'leechers': item.get('leechers', 0), 
-                'download_url': item.get('downloadUrl', ''),
-                'magnet_url': magnet_link,  # Use improved magnet extraction
-                'magnet': magnet_link,      # Also provide 'magnet' field for compatibility
+                'download_url': download_url,  # Original download URL (might be torrent file)
+                'magnet_url': magnet_link,     # Extracted magnet link (if any)
+                'magnet': magnet_link,         # Also provide 'magnet' field for compatibility
                 'info_url': item.get('infoUrl', ''),
                 'indexer': item.get('indexer', ''),
                 'category': item.get('categories', []),
                 'publish_date': item.get('publishDate', ''),
-                'infoHash': item.get('infoHash', '')
+                'infoHash': item.get('infoHash', ''),
+                'has_magnet': bool(magnet_link),
+                'has_download_url': bool(download_url)
             }
             results.append(result)
         
@@ -175,6 +196,51 @@ class IndexerManager:
             'total': len(results),
             'provider': self.provider
         }
+    
+    def resolve_download_url(self, download_url):
+        """
+        Resolve a Prowlarr/indexer download URL to get the actual magnet link
+        This handles cases where the indexer returns a download API URL instead of direct magnet
+        """
+        if not download_url:
+            return None
+            
+        # If it's already a magnet link, return as-is
+        if download_url.startswith('magnet:'):
+            return download_url
+        
+        # Check if it's a Prowlarr download URL
+        if '/download?' in download_url and 'apikey=' in download_url:
+            try:
+                # Make request to Prowlarr download URL
+                response = requests.get(download_url, timeout=10, allow_redirects=True)
+                
+                # Check if response is a redirect to magnet link
+                if response.history:
+                    for redirect in response.history:
+                        if redirect.headers.get('Location', '').startswith('magnet:'):
+                            return redirect.headers['Location']
+                
+                # Check final URL if it's a magnet
+                if response.url.startswith('magnet:'):
+                    return response.url
+                
+                # Check response content for magnet links
+                if hasattr(response, 'text'):
+                    import re
+                    magnet_match = re.search(r'magnet:[^"\s<>&]+', response.text)
+                    if magnet_match:
+                        return magnet_match.group(0)
+                
+                print(f"⚠️ Could not extract magnet from Prowlarr URL: {download_url[:100]}...")
+                return None
+                
+            except Exception as e:
+                print(f"❌ Error resolving download URL: {e}")
+                return None
+        
+        # Not a supported download URL format
+        return None
     
     def _parse_torznab_response(self, xml_data, limit):
         """Parse Torznab/Jackett XML response"""
