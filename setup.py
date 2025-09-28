@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Interactive setup script for TV Recorder
-Helps users configure the application on first run
+LineDrive Interactive Setup Wizard
+Helps users configure the TV recording software on first run
 """
 
 import json
@@ -15,7 +15,7 @@ import socket
 def print_banner():
     """Print welcome banner"""
     print("=" * 60)
-    print("    TV Recorder for HDHomeRun - Interactive Setup")
+    print("    LineDrive TV Recording Software - Setup")
     print("=" * 60)
     print()
     print("LEGAL NOTICE: This software is for legitimate, legal use only.")
@@ -391,7 +391,7 @@ def create_config():
     """Create configuration file"""
     print_banner()
     
-    print("This setup wizard will help you configure TV Recorder.")
+    print("This setup wizard will help you configure LineDrive.")
     print("You can change these settings later by editing config.json")
     print()
     
@@ -464,7 +464,7 @@ def create_config():
             json.dump(config, f, indent=2)
         
         print(f"\nConfiguration saved to {config_path}")
-        print("\nSetup complete! You can now run the TV Recorder:")
+        print("\nSetup complete! You can now run LineDrive:")
         print("  python dvr_web.py")
         print("\nOr for the GUI version:")
         print("  python Recordtv.py")

@@ -1,6 +1,6 @@
 """
-Generic VPN management for TV Recorder
-Supports multiple VPN providers with configurable commands
+LineDrive VPN Management
+Generic VPN support for secure connections with multiple providers
 """
 
 import subprocess

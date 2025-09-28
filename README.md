@@ -1,6 +1,16 @@
-# TV Recorder for HDHomeRun
+# LineDrive - TV Recording Software
 
-A comprehensive TV recording solution for HDHomeRun network tuners with web interface, scheduling, and torrent integration.
+<p align="center">
+  <img src="LineDrive Logo.jpg" alt="LineDrive Logo" width="200">
+</p>
+
+A comprehensive TV recording solution for HDHomeRun network tuners with web interface, scheduling, and indexer integration.
+
+## Trademark Notice
+
+**LineDrive** is an independent, open-source project and is not affiliated with, endorsed by, or sponsored by Silicondust USA Inc. **HDHomeRun** is a registered trademark of Silicondust USA Inc. This software is designed to work with HDHomeRun devices but is not an official product of Silicondust USA Inc.
+
+📋 **[Complete Trademark Notices & Legal Disclaimers](TRADEMARK_NOTICE.md)**
 
 ## Features
 
@@ -27,8 +37,8 @@ A comprehensive TV recording solution for HDHomeRun network tuners with web inte
 
 1. **Download the latest release** or clone this repository:
    ```bash
-   git clone https://github.com/YourUsername/TV_Recorder_pub.git
-   cd TV_Recorder_pub
+   git clone https://github.com/HansDandle/LineDrive.git
+   cd LineDrive
    ```
 
 2. **Install Python dependencies**:
@@ -238,7 +248,7 @@ python setup.py
 
 ### Windows Service Installation
 
-To run TV Recorder as a Windows service:
+To run LineDrive as a Windows service:
 
 1. **Install the service**:
    ```cmd
@@ -261,7 +271,7 @@ Prowlarr integration enables torrent-based content discovery:
 
 1. **Install Prowlarr** from [prowlarr.com](https://prowlarr.com)
 
-2. **Configure in TV Recorder**:
+2. **Configure in LineDrive**:
    ```bash
    python config_menu.py
    # Navigate to Prowlarr Integration
@@ -275,7 +285,7 @@ Prowlarr integration enables torrent-based content discovery:
 
 ### EPG (Electronic Program Guide)
 
-TV Recorder supports EPG data via Zap2it:
+LineDrive supports EPG data via Zap2it:
 
 1. **Configure EPG refresh**:
    - Set `ENABLE_BACKGROUND_EPG_REFRESH=1` environment variable
@@ -303,7 +313,7 @@ Enable remote control via webhook:
 ## File Structure
 
 ```
-TV_Recorder_pub/
+LineDrive/
 ├── dvr_web.py              # Main web application
 ├── Recordtv.py             # GUI application
 ├── config_manager.py       # Configuration management
@@ -473,9 +483,9 @@ The optional Prowlarr integration is provided for legitimate content discovery o
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/YourUsername/TV_Recorder_pub/issues)
+- **Issues**: [GitHub Issues](https://github.com/HansDandle/LineDrive/issues)
 - **Documentation**: This README and inline code comments
-- **Community**: [Discussions](https://github.com/YourUsername/TV_Recorder_pub/discussions)
+- **Community**: [Discussions](https://github.com/HansDandle/LineDrive/discussions)
 
 ## Roadmap
 

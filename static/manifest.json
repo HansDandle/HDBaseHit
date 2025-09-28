@@ -1,11 +1,16 @@
 {
-  "name": "TV Home Media Automation",
-  "short_name": "TV Media",
+  "name": "LineDrive - TV Recording Software",
+  "short_name": "LineDrive",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#181818",
   "theme_color": "#222",
   "icons": [
+    {
+      "src": "/static/LineDrive Logo.jpg",
+      "sizes": "any",
+      "type": "image/jpeg"
+    },
     {
       "src": "/static/icon-192.png",
       "sizes": "192x192",

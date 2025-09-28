@@ -1,6 +1,6 @@
 """
-Configuration management for TV Recorder
-Handles loading and validation of user configuration
+LineDrive Configuration Management
+Handles loading and validation of user configuration for TV recording software
 """
 import json
 import os
@@ -12,7 +12,7 @@ class ConfigManager:
             # Look for config in several locations
             possible_locations = [
                 Path.cwd() / "config.json",
-                Path.home() / ".tv_recorder" / "config.json",
+                Path.home() / ".linedrive" / "config.json",
                 Path(__file__).parent / "config.json"
             ]
             

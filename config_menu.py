@@ -1,6 +1,6 @@
 """
-Configuration menu system for TV Recorder
-Provides user-friendly menus for managing settings
+LineDrive Configuration Menu System
+Provides user-friendly menus for managing TV recording settings
 """
 
 import os
@@ -18,7 +18,7 @@ class ConfigMenu:
         while True:
             self.clear_screen()
             print("=" * 50)
-            print("    TV Recorder Configuration Menu")
+            print("    LineDrive Configuration Menu")
             print("=" * 50)
             print()
             print("1. HDHomeRun Settings")

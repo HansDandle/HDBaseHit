@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#222" />
     <link rel="manifest" href="/static/manifest.json" />
+    <link rel="icon" type="image/jpeg" href="/static/LineDrive Logo.jpg" />
     <link rel="stylesheet" href="/static/style.css" />
-    <title>TV Home Media Automation</title>
+            <title>LineDrive - TV Recording</title>
 </head>
 <body>
     <div id="app" class="centered-app">
-        <h1>TV Home Media Automation</h1>
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <img src="/static/LineDrive Logo.jpg" alt="LineDrive Logo" style="max-height: 80px; max-width: 200px; width: auto; height: auto; margin-bottom: 0.5rem;">
+            <h1 style="margin: 0.5rem 0;">📺 LineDrive TV Recording</h1>
+        </div>
         <div class="legal-notice" style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 8px 12px; margin: 10px 0; border-radius: 4px; font-size: 0.9em;">
             ⚠️ <strong>Legal Use Only:</strong> This software is for legitimate, legal recording of over-the-air content you are entitled to receive. Users are responsible for complying with copyright laws.
         </div>
@@ -360,5 +364,11 @@ document.getElementById('openFolderBtn')?.addEventListener('click', async () => 
     }
 });
 </script>
+
+<footer style="margin-top: 2rem; padding: 1rem; text-align: center; border-top: 1px solid #444; font-size: 0.8em; color: #888;">
+    <p><strong>LineDrive</strong> is an independent open-source project. Not affiliated with Silicondust USA Inc.</p>
+    <p>HDHomeRun is a registered trademark of Silicondust USA Inc.</p>
+</footer>
+
 </body>
 </html>

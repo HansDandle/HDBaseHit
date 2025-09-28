@@ -10,7 +10,7 @@
 
 # Commands to run DVR:
 function Start-DVRWithProwlarr {
-    Set-Location "C:\Users\brixw\Desktop\TV Recorder"
+    Set-Location "C:\Users\brixw\Desktop\code\LineDrive"
     
     # Set environment variables
     $env:PROWLARR_API_KEY = "73acf5d451594332bc2d50bcee137ddf"

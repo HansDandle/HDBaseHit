@@ -1,6 +1,9 @@
 """
-Windows Service wrapper for DVR app
-Install this to make DVR auto-start and always run
+LineDrive Windows Service Wrapper
+Install this to make LineDrive auto-start and always run
+
+DISCLAIMER: LineDrive is not affiliated with Silicondust USA Inc.
+HDHomeRun is a registered trademark of Silicondust USA Inc. This is an independent project.
 """
 
 import win32serviceutil
@@ -15,7 +18,7 @@ import time
 
 class DVRService(win32serviceutil.ServiceFramework):
     _svc_name_ = "TVRecorderDVR"
-    _svc_display_name_ = "TV Recorder DVR Service"
+    _svc_display_name_ = "LineDrive DVR Service"
     _svc_description_ = "TV Recording service with Prowlarr integration"
 
     def __init__(self, args):

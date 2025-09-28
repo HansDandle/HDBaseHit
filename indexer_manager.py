@@ -1,6 +1,6 @@
 """
-Generic Indexer Management for TV Recorder
-Supports multiple torrent/usenet indexer providers
+LineDrive Indexer Management
+Generic indexer support for multiple torrent/usenet providers
 """
 
 import requests

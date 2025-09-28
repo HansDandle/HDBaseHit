@@ -1,4 +1,4 @@
-# TV Recorder for HDHomeRun - Python Dependencies
+# LineDrive - Python Dependencies
 
 # Core Dependencies
 flask>=2.3.0

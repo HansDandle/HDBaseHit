@@ -1,3 +1,13 @@
+"""
+LineDrive - TV Recording Software
+Web interface for HDHomeRun device recording
+
+Trademark Notice:
+LineDrive is an independent open-source project.
+Not affiliated with Silicondust USA Inc.
+HDHomeRun is a registered trademark of Silicondust USA Inc.
+"""
+
 # Set up environment variables FIRST (before any imports that might use them)
 import os
 from config_manager import get_config

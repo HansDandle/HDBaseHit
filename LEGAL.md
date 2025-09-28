@@ -6,7 +6,17 @@ This software is licensed under the MIT License (see LICENSE file). However, **y
 
 ## Intended Legal Uses
 
-This software is designed and intended for **legitimate, lawful purposes only**, including:
+# Legal Notice
+
+## Trademark Disclaimer
+
+**LineDrive** is an independent, open-source project developed by the community. We are not affiliated with, endorsed by, or sponsored by Silicondust USA Inc.
+
+**HDHomeRun** is a registered trademark of Silicondust USA Inc. This software is designed to work with HDHomeRun devices but is not an official product of Silicondust USA Inc. All trademarks are the property of their respective owners.
+
+## Usage Notice
+
+This software is provided for legitimate, legal use only.
 
 ### ✅ Permitted Activities
 - **Personal time-shifting**: Recording over-the-air broadcast television for later viewing within your household

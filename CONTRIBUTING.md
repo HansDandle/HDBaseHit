@@ -1,6 +1,6 @@
-# Contributing to TV Recorder for HDHomeRun
+# Contributing to LineDrive
 
-Thank you for your interest in contributing to TV Recorder! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to LineDrive! This document provides guidelines for contributing to the project.
 
 ## Getting Started
 
@@ -9,8 +9,8 @@ Thank you for your interest in contributing to TV Recorder! This document provid
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/yourusername/TV_Recorder_pub.git
-   cd TV_Recorder_pub
+   git clone https://github.com/HansDandle/LineDrive.git
+   cd LineDrive
    ```
 3. **Create a virtual environment**:
    ```bash
@@ -289,4 +289,4 @@ Contributors are recognized in:
 - Project documentation
 - Special thanks in major releases
 
-Thank you for contributing to TV Recorder for HDHomeRun!
+Thank you for contributing to LineDrive!

@@ -1,18 +1,38 @@
 # Changelog
 
-All notable changes to TV Recorder for HDHomeRun will be documented in this file.
+All notable changes to LineDrive will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2025-09-28
 
 ### Added
-- Initial public release
-- Configuration management system with user-friendly setup
-- Interactive setup wizard (`setup.py`)
-- Configuration menu system (`config_menu.py`)
-- Comprehensive documentation and contributing guidelines
+- **LineDrive Branding**: Complete rebrand from "TV Recorder" to "LineDrive"
+- **Generic VPN Manager**: Support for NordVPN, ExpressVPN, ProtonVPN, Surfshark, and custom providers
+- **Generic Indexer Manager**: Support for Prowlarr, Jackett, and Torznab indexers
+- **LineDrive Logo**: Professional logo integration in web interface and documentation
+- **Trademark Compliance**: Comprehensive legal notices and disclaimers
+- **Interactive Setup Wizards**: User-friendly configuration for VPN and indexer providers
+- **Configuration Management**: JSON-based configuration system with templates
+
+### Removed
+- **BiratePay Integration**: Removed proprietary system in favor of generic indexer support
+- **ProtonVPN Hard-coding**: Replaced with provider-agnostic VPN system
+- **Test Files**: Cleaned up unnecessary test files and dependencies
+
+### Changed
+- **Repository Name**: Updated from TV_Recorder_pub to LineDrive
+- **Configuration Directory**: Changed from `.tv_recorder` to `.linedrive`
+- **Web Interface**: Updated branding, added logo, improved legal compliance notices
+- **Documentation**: Comprehensive updates for new provider-agnostic architecture
+
+## [1.0.0] - Previous
+
+### Added
+- Initial TV recording functionality
+- HDHomeRun integration
+- Basic web interface
 - Support for environment-based configuration
 - Automatic directory creation during setup
 - HDHomeRun device auto-discovery
